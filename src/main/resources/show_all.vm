@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>$title</title>
+</head>
+<body>
+<input type="text" id="ddsd" name="ds" value="sfds"></input>
+<input type="text" id="key" name="key" value=$key></input>
+</body>
+</html>
