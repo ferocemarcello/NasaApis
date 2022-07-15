@@ -5,7 +5,6 @@ import java.util.List;
 import static spark.Spark.*;
 
 public class Main {
-    private static final List<String> paths = Arrays.asList("show_all","/hello", "/index");
     public static void main(String[] args) {
         port(8080);
         get("/hello", (req, res) -> {
