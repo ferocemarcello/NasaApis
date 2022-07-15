@@ -1,1 +1,9 @@
-<h1>$message</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>$hello</title>
+</head>
+    <body>
+    <div>$person.getName()</div>
+    </body>
+</html>
