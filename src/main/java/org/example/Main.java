@@ -11,9 +11,9 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.example.Utils.buildUrl;
-import static org.example.Utils.editAsteroidResponse;
-import static org.example.WebUtils.retResponse;
+import static org.example.Utils.*;
+import static org.example.WebUtils.asteroidDescription;
+import static org.example.WebUtils.returnResponse;
 import static spark.Spark.*;
 
 public class Main {
@@ -45,7 +45,7 @@ public class Main {
                 if (req.queryParams("toDate") != null) put("toDate", req.queryParams("toDate"));
             }});
             try {
-                return editAsteroidResponse(retResponse(asteroidsUrl, res).body());
+                return editAsteroidResponse(returnResponse(asteroidsUrl, res).body());
 
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
@@ -60,7 +60,7 @@ public class Main {
                 }
             }});
             try {
-                return retResponse(asteroidsUrl, res).body();
+                return asteroidDescription(editLargesAsteroidResponse(returnResponse(asteroidsUrl, res).body()), res);
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
             }
@@ -76,7 +76,6 @@ public class Main {
             return "Internal Server error";
         });
     }
-
 
     private static Response handleNasaException(NasaException e, Response res) {
         res.type("text/html");

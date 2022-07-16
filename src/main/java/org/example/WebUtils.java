@@ -54,7 +54,7 @@ public class WebUtils {
         response.body(readResponseFromConnection(streamReader));
     }
 
-    public static Response retResponse(URL asteroidsUrl, Response response) throws IOException, NasaException {
+    public static Response returnResponse(URL asteroidsUrl, Response response) throws IOException, NasaException {
         sendGetRequestAndRead(asteroidsUrl, response);
         if (response.status() <= 299 && 200 >= response.status()) {
             response.body(prettyIndentJsonString(String.valueOf(new Gson().fromJson(response.body(), JsonObject.class))));
@@ -62,5 +62,11 @@ public class WebUtils {
         else throw new NasaException(response.body(), response.status());
         return response;
     }
-
+    public static String asteroidDescription(String singleAsteroid, Response response) throws IOException {
+        JsonObject asteroids = new Gson().fromJson(singleAsteroid, JsonObject.class);
+        String selfLink = asteroids.get("links").getAsJsonObject().get("self").getAsString();
+        sendGetRequestAndRead(new URL(selfLink), response);
+        response.body(prettyIndentJsonString(response.body()));
+        return response.body();
+    }
 }

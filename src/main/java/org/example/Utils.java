@@ -44,4 +44,26 @@ public class Utils {
         }
         return jsonResponse;
     }
+    public static String editLargesAsteroidResponse(String jsonResponse) throws JsonProcessingException {
+        JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)
+                .get("near_earth_objects");
+        if (asteroids != null) {
+            double maxDiameter = 0;
+            JsonElement largestAsteroid = null;
+            for (Map.Entry<String, JsonElement> date : asteroids.entrySet()) {
+                for (JsonElement asteroid : date.getValue().getAsJsonArray()) {
+                    JsonObject estimatedDiameter = asteroid.getAsJsonObject().get("estimated_diameter").
+                            getAsJsonObject().get("meters").getAsJsonObject();
+                    double estimatedDiameterAverage = (estimatedDiameter.get("estimated_diameter_max").
+                            getAsDouble() - estimatedDiameter.get("estimated_diameter_min").getAsDouble()) / 2;
+                    if(estimatedDiameterAverage > maxDiameter) {
+                        maxDiameter = estimatedDiameterAverage;
+                        largestAsteroid = asteroid;
+                    }
+                }
+            }
+            return prettyIndentJsonString(String.valueOf(largestAsteroid));
+        }
+        return jsonResponse;
+    }
 }
