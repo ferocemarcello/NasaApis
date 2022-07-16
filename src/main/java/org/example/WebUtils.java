@@ -1,7 +1,6 @@
 package org.example;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import spark.Response;
 
@@ -58,16 +57,7 @@ public class WebUtils {
     public static Response retResponse(URL asteroidsUrl, Response response) throws IOException, NasaException {
         sendGetRequestAndRead(asteroidsUrl, response);
         if (response.status() <= 299 && 200 >= response.status()) {
-            JsonObject jo = new Gson().fromJson(response.body(), JsonObject.class);
-            JsonElement asteroids = jo.get("near_earth_objects");
-            String responseString;
-            if(asteroids != null) {
-                responseString = prettyIndentJsonString(String.valueOf(asteroids));
-            }
-            else {
-                responseString = prettyIndentJsonString(String.valueOf(new Gson().fromJson(response.body(), JsonObject.class)));
-            }
-            response.body(responseString);
+            response.body(prettyIndentJsonString(String.valueOf(new Gson().fromJson(response.body(), JsonObject.class))));
         }
         else throw new NasaException(response.body(), response.status());
         return response;
