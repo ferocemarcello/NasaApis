@@ -46,8 +46,8 @@ public class Main {
 
             URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
                 put("api_key", NASA_API_KEY);
-                put("fromDate", newDates[0]);
-                put("toDate", newDates[1]);
+                put("start_date", newDates[0]);
+                put("end_date", newDates[1]);
             }});
             try {
                 /*List<String> allResponses = new ArrayList<>(Arrays.asList(returnResponse(asteroidsUrl, res).body()
