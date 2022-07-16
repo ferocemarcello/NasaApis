@@ -28,12 +28,10 @@ public class Utils {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.readValue(String.valueOf(jsonString), Object.class));
     }
 
-    public static String editAsteroidResponse(String jsonResponse) throws JsonProcessingException {
-        JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)
-                .get("near_earth_objects");
-        if (asteroids != null) {
+    public static String editAsteroidResponse(JsonObject json) throws JsonProcessingException {
+        if (json != null) {
             JsonArray asteroidArray = new JsonArray(10);
-            for (Map.Entry<String, JsonElement> date : asteroids.entrySet()) {
+            for (Map.Entry<String, JsonElement> date : json.entrySet()) {
                 if (asteroidArray.size() >= 10) break;
                 for (JsonElement asteroid : date.getValue().getAsJsonArray()) {
                     asteroid.getAsJsonObject().addProperty("date", date.getKey());
@@ -43,7 +41,7 @@ public class Utils {
             }
             return prettyIndentJsonString(String.valueOf(asteroidArray));
         }
-        return jsonResponse;
+        return prettyIndentJsonString(String.valueOf(json));
     }
     public static String editLargesAsteroidResponse(String jsonResponse) throws JsonProcessingException {
         JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)

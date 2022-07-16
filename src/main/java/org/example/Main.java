@@ -1,5 +1,9 @@
 package org.example;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.ehcache.Cache;
 import org.yaml.snakeyaml.Yaml;
 import spark.Response;
@@ -53,7 +57,15 @@ public class Main {
                 /*List<String> allResponses = new ArrayList<>(Arrays.asList(returnResponse(asteroidsUrl, res).body()
                         ,returnResponse(asteroidsUrltt, res).body()));*/
                 //String asteroidString = combineAsteroidStrings(allResponses);
-                return editAsteroidResponse(returnResponse(asteroidsUrl, res).body());
+                String responseBody = returnResponse(asteroidsUrl, res).body();
+                Object asteroids = new Gson().fromJson(responseBody, HashMap.class).get("near_earth_objects");
+                /*if(asteroids!=null) {
+                    /*for (JsonElement x: asteroids) {
+                        System.out.println(x);
+                    }/*
+                }*/
+
+                return editAsteroidResponse(asteroids.getAsJsonObject());
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
             }
