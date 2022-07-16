@@ -1,7 +1,6 @@
 package org.example;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.ehcache.Cache;
@@ -10,12 +9,12 @@ import spark.Response;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
-import static org.example.CacheUtils.getCacheDates;
-import static org.example.CacheUtils.initCache;
+import static org.example.CacheUtils.*;
 import static org.example.Utils.*;
 import static org.example.WebUtils.asteroidDescription;
 import static org.example.WebUtils.returnResponse;
@@ -46,26 +45,24 @@ public class Main {
                 res.body("Wrong Query Params");
                 return res.body();
             }
-            String[] newDates = getCacheDates(dates[0], dates[1], cache);
+            String[] newDates = getNoCacheDates(dates[0], dates[1], cache);
+            String[] cacheDates = getCacheDates(dates[0], dates[1], cache);
 
+            List<URL> urlsToHit = new ArrayList<>();
             URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
                 put("api_key", NASA_API_KEY);
                 put("start_date", newDates[0]);
                 put("end_date", newDates[1]);
             }});
+            urlsToHit.add(asteroidsUrl);
             try {
                 /*List<String> allResponses = new ArrayList<>(Arrays.asList(returnResponse(asteroidsUrl, res).body()
                         ,returnResponse(asteroidsUrltt, res).body()));*/
                 //String asteroidString = combineAsteroidStrings(allResponses);
-                String responseBody = returnResponse(asteroidsUrl, res).body();
-                Object asteroids = new Gson().fromJson(responseBody, HashMap.class).get("near_earth_objects");
-                /*if(asteroids!=null) {
-                    /*for (JsonElement x: asteroids) {
-                        System.out.println(x);
-                    }/*
-                }*/
+                Map<String,String> toReturnAsteroids = filterCacheToMap(cacheDates, cache);
+                toReturnAsteroids = combineResponses(newDates, cache, toReturnAsteroids);
 
-                return editAsteroidResponse(asteroids.getAsJsonObject());
+                return editAsteroidResponse(toReturnAsteroids);
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
             }
@@ -79,7 +76,7 @@ public class Main {
                 }
             }});
             try {
-                return asteroidDescription(editLargesAsteroidResponse(returnResponse(asteroidsUrl, res).body()), res);
+                return asteroidDescription(editLargesAsteroidResponse(returnResponse(asteroidsUrl)));
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
             }
@@ -95,6 +92,23 @@ public class Main {
             return "Internal Server error";
         });
     }
+
+    private static Map<String, String> combineResponses(String[] newDates, Cache<String, String> cache, Map<String, String> toReturnAsteroids) throws NasaException, IOException {
+        List<URL> urlsToHit = getUrlsFromDates(newDates);
+        for (URL url:urlsToHit) {
+            String responseBody = returnResponse(url);
+            JsonObject respJson = (JsonObject) new Gson().fromJson(responseBody, JsonObject.class).get("near_earth_objects");
+            for (Map.Entry<String, JsonElement> date :respJson.entrySet()) {
+                cache.put(date.getKey(), date.getValue().toString());
+            }
+        }
+        return new HashMap<>();
+    }
+
+    private static List<URL> getUrlsFromDates(String[] newDates) {
+        return new ArrayList<>();
+    }
+
 
     private static String[] handleDatesParam(String fromDate, String toDate) {
         LocalDate.parse(fromDate);

@@ -40,32 +40,25 @@ public class WebUtils {
         return content.toString();
     }
 
-    public static void sendGetRequestAndRead(URL asteroidsUrl, Response response) throws IOException {
+    public static String sendGetRequestAndRead(URL asteroidsUrl) throws IOException, NasaException {
         HttpURLConnection con = sendGetRequest(asteroidsUrl);
         Reader streamReader;
 
-        if (con.getResponseCode() > 299) {
+        if (con.getResponseCode() > 299 && 200 >= con.getResponseCode()) {
             streamReader = new InputStreamReader(con.getErrorStream());
-            response.type("text/html");
         } else {
             streamReader = new InputStreamReader(con.getInputStream());
-            response.type("application/json");
+            throw new NasaException(readResponseFromConnection(streamReader), con.getResponseCode());
         }
-        response.status(con.getResponseCode());
-        response.body(readResponseFromConnection(streamReader));
+        return readResponseFromConnection(streamReader);
     }
 
-    public static Response returnResponse(URL asteroidsUrl, Response response) throws IOException, NasaException {
-        sendGetRequestAndRead(asteroidsUrl, response);
-        if (response.status() <= 299 && 200 >= response.status()) {
-            response.body(prettyIndentJsonString(response.body()));
-        }
-        else throw new NasaException(response.body(), response.status());
-        return response;
+    public static String returnResponse(URL asteroidsUrl) throws IOException, NasaException {
+        return sendGetRequestAndRead(asteroidsUrl);
     }
-    public static String asteroidDescription(String singleAsteroid, Response response) throws IOException, NasaException {
+    public static String asteroidDescription(String singleAsteroid) throws IOException, NasaException {
         String selfLink = new Gson().fromJson(singleAsteroid, JsonObject.class).get("links").getAsJsonObject()
                 .get("self").getAsString();
-        return returnResponse(new URL(selfLink), response).body();
+        return returnResponse(new URL(selfLink));
     }
 }

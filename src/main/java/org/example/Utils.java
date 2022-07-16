@@ -28,20 +28,17 @@ public class Utils {
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.readValue(String.valueOf(jsonString), Object.class));
     }
 
-    public static String editAsteroidResponse(JsonObject json) throws JsonProcessingException {
-        if (json != null) {
+    public static String editAsteroidResponse(Map<String, String> json) throws JsonProcessingException {
             JsonArray asteroidArray = new JsonArray(10);
-            for (Map.Entry<String, JsonElement> date : json.entrySet()) {
+            for (Map.Entry<String, String> date : json.entrySet()) {
                 if (asteroidArray.size() >= 10) break;
-                for (JsonElement asteroid : date.getValue().getAsJsonArray()) {
-                    asteroid.getAsJsonObject().addProperty("date", date.getKey());
-                    asteroidArray.add(asteroid);
+                for (Map.Entry<String, JsonElement> asteroid : new Gson().fromJson(date.getValue(), JsonObject.class).entrySet()) {
+                    asteroid.getValue().getAsJsonObject().addProperty("date", date.getKey());
+                    asteroidArray.add(asteroid.getValue());
                     if (asteroidArray.size() >= 10) break;
                 }
             }
             return prettyIndentJsonString(String.valueOf(asteroidArray));
-        }
-        return prettyIndentJsonString(String.valueOf(json));
     }
     public static String editLargesAsteroidResponse(String jsonResponse) throws JsonProcessingException {
         JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)

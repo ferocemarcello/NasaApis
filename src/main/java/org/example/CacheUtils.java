@@ -22,6 +22,25 @@ public class CacheUtils {
     public static String getFromCache(String key, Cache<String, String> cache) {
         return cache.get(key);
     }
+    public static String[] getNoCacheDates(String dateFrom, String dateTo, Cache<String, String> cache) {
+        LocalDate startDate = LocalDate.parse(dateFrom);
+        LocalDate endDate = LocalDate.parse(dateTo);
+        boolean stop = false;
+        do {
+            String dateString = startDate.toString();
+            if(cache.containsKey(dateString)) startDate = startDate.plusDays(1);
+            else stop = true;
+        }
+        while(startDate.isBefore(endDate) && !stop);
+        stop = false;
+        do {
+            String dateString = endDate.toString();
+            if(cache.containsKey(dateString)) endDate = startDate.minusDays(1);
+            else stop = true;
+        }
+        while(endDate.isAfter(startDate) && !stop);
+        return new String[] {startDate.toString(), endDate.toString() };
+    }
     public static String[] getCacheDates(String dateFrom, String dateTo, Cache<String, String> cache) {
         LocalDate startDate = LocalDate.parse(dateFrom);
         LocalDate endDate = LocalDate.parse(dateTo);
@@ -40,6 +59,9 @@ public class CacheUtils {
         }
         while(endDate.isAfter(startDate) && !stop);
         return new String[] {startDate.toString(), endDate.toString() };
+    }
+    public static Map<String, String> filterCacheToMap(String[] cacheDates, Cache<String, String> cache) {
+        return new HashMap<>();
     }
     public static Cache<String, String> initCache(int cacheSize) {
         cacheManager = CacheManagerBuilder
