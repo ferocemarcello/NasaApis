@@ -11,6 +11,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 public class Utils {
@@ -65,5 +66,15 @@ public class Utils {
             return prettyIndentJsonString(String.valueOf(largestAsteroid));
         }
         return jsonResponse;
+    }
+
+    public static String combineAsteroidStrings(List<String> arraysOfArrays) {
+        JsonArray jsonArray = new JsonArray();
+        for (String asteroidArray: arraysOfArrays) {
+            for (JsonElement jsonElement:new Gson().fromJson(asteroidArray, JsonObject.class).getAsJsonArray()) {
+                jsonArray.add(jsonElement);
+            }
+        }
+        return jsonArray.getAsString();
     }
 }
