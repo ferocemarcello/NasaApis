@@ -44,7 +44,8 @@ public class Main {
                 if (req.queryParams("toDate") != null) put("toDate", req.queryParams("toDate"));
             }});
             try {
-                return retResponse(asteroidsUrl, res);
+                return retResponse(asteroidsUrl, res).body();
+
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
             }
@@ -58,7 +59,7 @@ public class Main {
                 }
             }});
             try {
-                return retResponse(asteroidsUrl, res);
+                return retResponse(asteroidsUrl, res).body();
             } catch (NasaException e) {
                 return handleNasaException(e, res).body();
             }

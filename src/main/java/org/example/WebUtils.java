@@ -1,8 +1,7 @@
 package org.example;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import spark.Response;
 
@@ -12,6 +11,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import static org.example.Utils.prettyIndentJsonString;
 
 public class WebUtils {
     private static final int connectionTimeout = 60000;
@@ -28,7 +29,7 @@ public class WebUtils {
         return con;
     }
 
-    public static ResponseClass readResponseFromConnection(Reader streamReader, String message, int responseCode) throws IOException {
+    public static String readResponseFromConnection(Reader streamReader) throws IOException {
         BufferedReader in = new BufferedReader(streamReader);
         String inputLine;
         StringBuilder content = new StringBuilder();
@@ -36,59 +37,40 @@ public class WebUtils {
             content.append(inputLine);
         }
         in.close();
-        String resNasa = content.toString();
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            return new ResponseClass(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.readValue(resNasa, Object.class)), message, responseCode);
-        } catch (JsonProcessingException e) {
-            return new ResponseClass(resNasa, message, responseCode);
-        }
+        return content.toString();
     }
 
-    public static ResponseClass sendGetRequestAndRead(URL asteroidsUrl) throws IOException {
+    public static void sendGetRequestAndRead(URL asteroidsUrl, Response response) throws IOException {
         HttpURLConnection con = sendGetRequest(asteroidsUrl);
         Reader streamReader;
 
         if (con.getResponseCode() > 299) {
             streamReader = new InputStreamReader(con.getErrorStream());
+            response.type("text/html");
         } else {
             streamReader = new InputStreamReader(con.getInputStream());
+            response.type("application/json");
         }
-        return readResponseFromConnection(streamReader, con.getResponseMessage(), con.getResponseCode());
+        response.status(con.getResponseCode());
+        response.body(readResponseFromConnection(streamReader));
     }
 
-    public static JsonObject retResponse(URL asteroidsUrl, Response res) throws IOException, NasaException {
-        WebUtils.ResponseClass response = sendGetRequestAndRead(asteroidsUrl);
-        res.status(response.getCode());
-        if (200 >= res.status() && res.status() <= 299) {
-            res.type("application/json");
-            return new Gson().fromJson(response.getResponse(), JsonObject.class);
+    public static Response retResponse(URL asteroidsUrl, Response response) throws IOException, NasaException {
+        sendGetRequestAndRead(asteroidsUrl, response);
+        if (response.status() <= 299 && 200 >= response.status()) {
+            JsonObject jo = new Gson().fromJson(response.body(), JsonObject.class);
+            JsonElement asteroids = jo.get("near_earth_objects");
+            String responseString;
+            if(asteroids != null) {
+                responseString = prettyIndentJsonString(String.valueOf(asteroids));
+            }
+            else {
+                responseString = prettyIndentJsonString(String.valueOf(new Gson().fromJson(response.body(), JsonObject.class)));
+            }
+            response.body(responseString);
         }
-        else throw new NasaException(response.getResponse(), response.getMessage(), response.getCode());
-    }
-
-    public static class ResponseClass {
-        private final String response;
-        private final String message;
-        private final int code;
-
-        public ResponseClass(String response, String message, int code) {
-            this.response = response;
-            this.message = message;
-            this.code = code;
-        }
-
-        public String getResponse() {
-            return response;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public int getCode() {
-            return code;
-        }
+        else throw new NasaException(response.body(), response.status());
+        return response;
     }
 
 }

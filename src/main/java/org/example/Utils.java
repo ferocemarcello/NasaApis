@@ -1,5 +1,7 @@
 package org.example;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.utils.URIBuilder;
 
 import java.net.MalformedURLException;
@@ -14,5 +16,9 @@ public class Utils {
             uriBuilder.addParameter(queryParam.getKey(), queryParam.getValue());
         }
         return uriBuilder.build().toURL();
+    }
+    public static String prettyIndentJsonString(String jsonString) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.readValue(String.valueOf(jsonString), Object.class));
     }
 }
