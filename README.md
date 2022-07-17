@@ -57,7 +57,11 @@ You can append:
     
 The date should be in the format "YYYY-MM-DD".
 You can't request a date range longer than 7 days unless some dates are already present in the cache
-Example: 
+
+Example:
+
         Request 1: fromDate=2021-01-01&toDate=2021-01-10 throws error
+        
         Request 2: fromDate=2021-01-01&toDate=2021-01-05 works
+        
         Request 3: fromDate=2021-01-01&toDate=2021-01-10 works if the cache size is at least 3
