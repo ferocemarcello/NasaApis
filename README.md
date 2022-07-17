@@ -97,3 +97,8 @@ Unit tests are availble in https://github.com/ferocemarcello/spondAssignment/tre
 
 
 Databases can be added with few lines of code. All the logic is there and one just need to connect with the database and write few lines of code for Select * FROM TABLE WHERE KEY=KEY, INSERT INTO TABLE
+
+Example of Responses are available here:
+
+- https://github.com/ferocemarcello/spondAssignment/blob/main/datesExampleResponse.json
+- https://github.com/ferocemarcello/spondAssignment/blob/main/yearLargestExampleResponse.json
