@@ -50,5 +50,7 @@ java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {port-number} {
 
 Once the server is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
 You can append:
+    
     - /asteroids/dates?fromDate={{fromDate}}&toDate={{toDate}} for list of asteroids during a date range
-    - /asteroids/largest?year={{year}} for description of the largest asteroids in one year
+    
+    -/asteroids/largest?year={{year}} for description of the largest asteroids in one year
