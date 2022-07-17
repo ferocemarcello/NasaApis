@@ -11,7 +11,10 @@ import org.apache.http.client.utils.URIBuilder;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class Utils {
@@ -41,7 +44,47 @@ public class Utils {
         return String.valueOf(asteroidArray);
     }
 
-    public static String editLargesAsteroidResponse(String jsonResponse, String arrayKey) throws JsonProcessingException {
+    public static List<URL> getNasaUrlsFromYear(String year, String nasaHost, String nasaApiKey) throws MalformedURLException, URISyntaxException {
+        LocalDate start_date = LocalDate.parse(year + "-01-01");
+        LocalDate end_date = start_date.plusWeeks(1);
+        List<URL> urlsFromYear = new LinkedList<>();
+        while (end_date.getYear() == Integer.parseInt(year)) {
+            LocalDate finalEnd_date = end_date;
+            LocalDate finalStart_date = start_date;
+            urlsFromYear.add(buildUrl(nasaHost, new HashMap<>() {{
+                put("api_key", nasaApiKey);
+                put("start_date", finalStart_date.toString());
+                put("end_date", finalEnd_date.toString());
+            }}));
+            start_date = start_date.plusDays(8);
+            end_date = start_date.plusWeeks(1);
+        }
+        if (start_date.getYear() == Integer.parseInt(year)) {
+            LocalDate finalStart_date1 = start_date;
+            urlsFromYear.add(buildUrl(nasaHost, new HashMap<>() {{
+                put("api_key", nasaApiKey);
+                put("start_date", finalStart_date1.toString());
+                put("end_date", year + "-12-31");
+            }}));
+        }
+        return urlsFromYear;
+    }
+
+    public static String getLargerAsteroid(String asteroidOne, String asteroidTwo) {
+        if (asteroidOne == null) return asteroidTwo;
+        if (asteroidTwo == null) return asteroidOne;
+        JsonObject diameterOne = new Gson().fromJson(asteroidOne, JsonObject.class).get("estimated_diameter").getAsJsonObject().get("meters").getAsJsonObject();
+        double averageOne = (diameterOne.get("estimated_diameter_max").getAsDouble()
+                - diameterOne.get("estimated_diameter_min").getAsDouble()) / 2;
+
+        JsonObject diameterTwo = new Gson().fromJson(asteroidTwo, JsonObject.class).get("estimated_diameter").getAsJsonObject().get("meters").getAsJsonObject();
+        double averageTwo = (diameterTwo.get("estimated_diameter_max").getAsDouble()
+                - diameterTwo.get("estimated_diameter_min").getAsDouble()) / 2;
+        if (averageOne >= averageTwo) return asteroidOne;
+        else return asteroidTwo;
+    }
+
+    public static String getLargestAsteroid(String jsonResponse, String arrayKey) throws JsonProcessingException {
         JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)
                 .get(arrayKey);
         if (asteroids != null) {
@@ -49,10 +92,13 @@ public class Utils {
             JsonElement largestAsteroid = null;
             for (Map.Entry<String, JsonElement> date : asteroids.entrySet()) {
                 for (JsonElement asteroid : date.getValue().getAsJsonArray()) {
-                    JsonObject estimatedDiameter = asteroid.getAsJsonObject()
-                            .get("estimated_diameter").getAsJsonObject().get("meters").getAsJsonObject();
-                    double estimatedDiameterAverage = (estimatedDiameter.get("estimated_diameter_max")
-                            .getAsDouble() - estimatedDiameter.get("estimated_diameter_min").getAsDouble()) / 2;
+                    double estimatedDiameterAverage = -1;
+                    if (asteroid.getAsJsonObject().has("estimated_diameter")) {
+                        JsonObject estimatedDiameter = asteroid.getAsJsonObject()
+                                .get("estimated_diameter").getAsJsonObject().get("meters").getAsJsonObject();
+                        estimatedDiameterAverage = (estimatedDiameter.get("estimated_diameter_max")
+                                .getAsDouble() - estimatedDiameter.get("estimated_diameter_min").getAsDouble()) / 2;
+                    }
                     if (estimatedDiameterAverage > maxDiameter) {
                         maxDiameter = estimatedDiameterAverage;
                         largestAsteroid = asteroid;

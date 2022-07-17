@@ -6,6 +6,7 @@ import spark.Response;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.example.utils.CacheUtils.*;
@@ -29,15 +30,15 @@ public class Main {
     private static DAO DAO;
 
     public static void main(String[] args) {
-        if(args.length>=1) NASA_API_KEY = args[0];
+        if (args.length >= 1) NASA_API_KEY = args[0];
         else NASA_API_KEY = null;
-        if(args.length>=2) port(Integer.parseInt(args[1]));
+        if (args.length >= 2) port(Integer.parseInt(args[1]));
         else port(8080);
-        if(args.length>=3) CACHE_DATES_SIZE = Integer.parseInt(args[2]);
+        if (args.length >= 3) CACHE_DATES_SIZE = Integer.parseInt(args[2]);
         else CACHE_DATES_SIZE = 30;
-        if(args.length>=4) CACHE_YEARS_SIZE = Integer.parseInt(args[3]);
+        if (args.length >= 4) CACHE_YEARS_SIZE = Integer.parseInt(args[3]);
         else CACHE_YEARS_SIZE = 20;
-        if(args.length>=5) DAO = new DAO(new DbConfig(args[4]));//path to dbConfigFile
+        if (args.length >= 5) DAO = new DAO(new DbConfig(args[4]));//path to dbConfigFile
         CACHE_DATES = initCache(CACHE_DATES_SIZE, CACHE_DATES_NAME);
         CACHE_YEARS = initCache(CACHE_YEARS_SIZE, CACHE_YEARS_NAME);
         get("/asteroids/dates", (req, res) -> {
@@ -84,22 +85,25 @@ public class Main {
             } else {
                 if (DAO != null && DAO.contains(YEAR_TABLE, year)) yearResponse = DAO.get(YEAR_TABLE, year);
                 else {
-                    URL largestUrl = buildUrl(NASA_HOST, new HashMap<>() {{
-                        put("api_key", NASA_API_KEY);
-                        if (req.queryParams("year") != null) {
-                            put("fromDate", year + "-01-01");
-                            put("toDate", year + "-12-31");
+                    List<URL> yearUrls = getNasaUrlsFromYear(year, NASA_HOST, NASA_API_KEY);
+                    String largestAsteroid = null;
+                    for (URL partYearUrl : yearUrls) {
+                        try {
+                            largestAsteroid = getLargerAsteroid(largestAsteroid, getLargestAsteroid(
+                                    sendGetRequestAndRead(partYearUrl, CONNECTION_TIMEOUT, READ_TIMEOUT),
+                                    "near_earth_objects"));
+                        } catch (NasaException e) {
+                            editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
+                            return res.body();
                         }
-                    }});
+                    }
                     try {
-                        yearResponse = asteroidDescription(editLargesAsteroidResponse(
-                                sendGetRequestAndRead(largestUrl, CONNECTION_TIMEOUT, READ_TIMEOUT),
-                                "near_earth_objects"));
-                        CACHE_YEARS.put(year, yearResponse);
+                        yearResponse = asteroidDescription(largestAsteroid);
                     } catch (NasaException e) {
                         editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
                         return res.body();
                     }
+                    CACHE_YEARS.put(year, yearResponse);
                 }
             }
             editResponse(res, 200, "application/json", prettyIndentJsonString(yearResponse));
