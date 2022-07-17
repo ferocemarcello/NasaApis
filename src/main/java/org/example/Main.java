@@ -32,8 +32,11 @@ public class Main {
     public static void main(String[] args) {
         if (args.length >= 1) NASA_API_KEY = args[0];
         else NASA_API_KEY = null;
-        if (args.length >= 2) port(Integer.parseInt(args[1]));
-        else port(8080);
+        int port;
+        if (args.length >= 2) port = getHerokuAssignedPort(Integer.parseInt(args[1]));
+        else port = getHerokuAssignedPort(8080);
+        port(port);
+
         if (args.length >= 3) CACHE_DATES_SIZE = Integer.parseInt(args[2]);
         else CACHE_DATES_SIZE = 30;
         if (args.length >= 4) CACHE_YEARS_SIZE = Integer.parseInt(args[3]);
@@ -119,6 +122,15 @@ public class Main {
             res.type("application/json");
             return "Internal Server error";
         });
+    }
+
+    private static int getHerokuAssignedPort(int port) {
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        if (processBuilder.environment().get("PORT") != null) {
+            return Integer.parseInt(processBuilder.environment().get("PORT"));
+        }
+        if(port==0) return 8080;
+        return port; //return default port if heroku-port isn't set (i.e. on localhost)
     }
 
     private static void editResponse(Response response, int status, String type, String body) {
