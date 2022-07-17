@@ -42,3 +42,13 @@ Final result should consist of:
 1. Source code with instructions on how to run it in a git repository we can access (Github, Bitbucket etc.)
 2. A service deployed to a cloud provider of your choice using IaC approach.
     1. This is optional — only do it if you would like to demonstrate your DevOps skills.
+    
+To run the server, use the jar available in the root folder.
+run it from the terminal with the following command:
+
+java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {port-number} {cache-size-for-asteroids-in-date-range} {cache-size-for-largest-asteroid-description-in-year} {nasa-api-key}
+
+Once the server is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
+You can append:
+    - /asteroids/dates?fromDate={{fromDate}}&toDate={{toDate}} for list of asteroids during a date range
+    - /asteroids/largest?year={{year}} for description of the largest asteroids in one year
