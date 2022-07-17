@@ -51,6 +51,13 @@ java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {port-number} {
 Once the server is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
 You can append:
     
-    - /asteroids/dates?fromDate={{fromDate}}&toDate={{toDate}} for list of asteroids during a date range
+    - /asteroids/dates?fromDate={{fromDate}}&toDate={{toDate}} for list of asteroids during a date range (Example http://localhost:8080/asteroids/dates?fromDate=2021-01-01&toDate=2021-01-06)
     
-    -/asteroids/largest?year={{year}} for description of the largest asteroids in one year
+    -/asteroids/largest?year={{year}} for description of the largest asteroids in one year(Example http://localhost:8080/asteroids/largest?year=2022)
+    
+The date should be in the format "YYYY-MM-DD".
+You can't request a date range longer than 7 days unless some dates are already present in the cache
+Example: 
+        Request 1: fromDate=2021-01-01&toDate=2021-01-10 throws error
+        Request 2: fromDate=2021-01-01&toDate=2021-01-05 works
+        Request 3: fromDate=2021-01-01&toDate=2021-01-10 works if the cache size is at least 3
