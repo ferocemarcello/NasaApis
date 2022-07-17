@@ -46,7 +46,7 @@ Final result should consist of:
 To run the server, use the jar available in the root folder.
 run it from the terminal with the following command:
 
-java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {port-number} {cache-size-for-asteroids-in-date-range} {cache-size-for-largest-asteroid-description-in-year} {nasa-api-key}
+java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {nasa-api-key} {port-number} [cache-size-for-asteroids-in-date-range] [cache-size-for-largest-asteroid-description-in-year] [path-to-file-with-db-config]
 
 Once the server is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
 You can append:
