@@ -8,30 +8,38 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.example.CacheUtils.*;
-import static org.example.Utils.*;
-import static org.example.WebUtils.*;
+import static org.example.utils.CacheUtils.*;
+import static org.example.utils.Utils.*;
+import static org.example.utils.WebUtils.*;
 import static spark.Spark.*;
 
 public class Main {
     public final static String NASA_HOST = "https://api.nasa.gov/neo/rest/v1/feed";
+    public final static String YEAR_TABLE = "YEARS";
+    public static final String CACHE_DATES_NAME = "cacheDates";
+    public static final String CACHE_YEARS_NAME = "cacheYears";
+    private static final String DATES_TABLE = "DATES";
+    private static final int CONNECTION_TIMEOUT = 60000;
+    private static final int READ_TIMEOUT = 60000;
     public static int CACHE_DATES_SIZE;
     public static int CACHE_YEARS_SIZE;
     public static String NASA_API_KEY;
     public static Cache<String, String> CACHE_DATES;
-    public static final String CACHE_DATES_NAME = "cacheDates";
     public static Cache<String, String> CACHE_YEARS;
-    public static final String CACHE_YEARS_NAME = "cacheYears";
-    private static final int CONNECTION_TIMEOUT = 60000;
-    private static final int READ_TIMEOUT = 60000;
+    private static DAO DAO;
 
     public static void main(String[] args) {
-        CACHE_DATES_SIZE = Integer.parseInt(args[1]);
-        CACHE_YEARS_SIZE = Integer.parseInt(args[2]);
+        if(args.length>=1) NASA_API_KEY = args[0];
+        else NASA_API_KEY = null;
+        if(args.length>=2) port(Integer.parseInt(args[1]));
+        else port(8080);
+        if(args.length>=3) CACHE_DATES_SIZE = Integer.parseInt(args[2]);
+        else CACHE_DATES_SIZE = 30;
+        if(args.length>=4) CACHE_YEARS_SIZE = Integer.parseInt(args[3]);
+        else CACHE_YEARS_SIZE = 20;
+        if(args.length>=5) DAO = new DAO(new DbConfig(args[4]));//path to dbConfigFile
         CACHE_DATES = initCache(CACHE_DATES_SIZE, CACHE_DATES_NAME);
         CACHE_YEARS = initCache(CACHE_YEARS_SIZE, CACHE_YEARS_NAME);
-        port(Integer.parseInt(args[0]));
-        NASA_API_KEY = args[3];
         get("/asteroids/dates", (req, res) -> {
             String[] dates;
             try {
@@ -40,14 +48,17 @@ public class Main {
                 editResponse(res, 400, "text/html", "Wrong Query Params");
                 return res.body();
             }
-            String[] newDates = getNoCacheDates(dates[0], dates[1], CACHE_DATES);
-            String[] datesInCache = getDatesInCache(dates[0], dates[1], CACHE_DATES);
+            Pair<String[], String[]> datesInCacheAndDb = getDatesInCacheDb(dates[0], dates[1],
+                    CACHE_DATES, DAO, DATES_TABLE);
+            String[] datesInCache = datesInCacheAndDb.getFirst();
+            String[] datesInDb = datesInCacheAndDb.getSecond();
+            String[] datesToRequest = getNoCacheDates(dates[0], dates[1], datesInCache, datesInDb);
             Map<String, String> requestResponseMap;
-            if (newDates != null) {
+            if (datesToRequest != null) {
                 URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
                     put("api_key", NASA_API_KEY);
-                    put("start_date", newDates[0]);
-                    put("end_date", newDates[1]);
+                    put("start_date", datesToRequest[0]);
+                    put("end_date", datesToRequest[1]);
                 }});
                 try {
                     requestResponseMap = returnResponseMap(
@@ -60,32 +71,35 @@ public class Main {
             Map<String, String> cacheMap = filterCacheToMap(datesInCache, CACHE_DATES);
             Map<String, String> toReturnAsteroids = combineResponses(cacheMap, requestResponseMap);
             putMapInCache(requestResponseMap, CACHE_DATES);
-            editResponse(res, 200,"application/json",
+            if (DAO != null) DAO.putManyInDb(requestResponseMap.entrySet());
+            editResponse(res, 200, "application/json",
                     prettyIndentJsonString(editAsteroidResponse(toReturnAsteroids)));
             return res.body();
         });
         get("/asteroids/largest", (req, res) -> {
             String year = req.queryParams("year");
             String yearResponse;
-            if(CACHE_YEARS.containsKey(year)) {
+            if (CACHE_YEARS.containsKey(year)) {
                 yearResponse = CACHE_YEARS.get(year);
-            }
-            else {
-                URL largestUrl = buildUrl(NASA_HOST, new HashMap<>() {{
-                    put("api_key", NASA_API_KEY);
-                    if (req.queryParams("year") != null) {
-                        put("fromDate", year + "-01-01");
-                        put("toDate", year + "-12-31");
+            } else {
+                if (DAO != null && DAO.contains(YEAR_TABLE, year)) yearResponse = DAO.get(YEAR_TABLE, year);
+                else {
+                    URL largestUrl = buildUrl(NASA_HOST, new HashMap<>() {{
+                        put("api_key", NASA_API_KEY);
+                        if (req.queryParams("year") != null) {
+                            put("fromDate", year + "-01-01");
+                            put("toDate", year + "-12-31");
+                        }
+                    }});
+                    try {
+                        yearResponse = asteroidDescription(editLargesAsteroidResponse(
+                                sendGetRequestAndRead(largestUrl, CONNECTION_TIMEOUT, READ_TIMEOUT),
+                                "near_earth_objects"));
+                        CACHE_YEARS.put(year, yearResponse);
+                    } catch (NasaException e) {
+                        editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
+                        return res.body();
                     }
-                }});
-                try {
-                    yearResponse = asteroidDescription(editLargesAsteroidResponse(
-                            sendGetRequestAndRead(largestUrl, CONNECTION_TIMEOUT, READ_TIMEOUT),
-                            "near_earth_objects"));
-                    CACHE_YEARS.put(year, yearResponse);
-                } catch (NasaException e) {
-                    editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
-                    return res.body();
                 }
             }
             editResponse(res, 200, "application/json", prettyIndentJsonString(yearResponse));

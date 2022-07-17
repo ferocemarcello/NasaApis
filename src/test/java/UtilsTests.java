@@ -1,5 +1,5 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.example.Utils;
+import org.example.utils.Utils;
 import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
@@ -8,7 +8,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.example.Utils.splitJsonStringToMap;
+import static org.example.utils.Utils.splitJsonStringToMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UtilsTests {

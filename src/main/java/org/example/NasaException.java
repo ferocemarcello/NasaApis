@@ -2,7 +2,7 @@ package org.example;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import static org.example.Utils.prettyIndentJsonString;
+import static org.example.utils.Utils.prettyIndentJsonString;
 
 public class NasaException extends Throwable {
     private final String nasaResponse;

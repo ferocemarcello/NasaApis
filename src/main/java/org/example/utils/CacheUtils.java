@@ -1,4 +1,4 @@
-package org.example;
+package org.example.utils;
 
 
 import org.ehcache.Cache;
@@ -8,6 +8,8 @@ import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.core.spi.service.StatisticsService;
 import org.ehcache.impl.internal.statistics.DefaultStatisticsService;
+import org.example.DAO;
+import org.example.Pair;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -99,7 +101,7 @@ public class CacheUtils {
                     LocalDate.parse(dateTo))) {
                 newCacheDates.add(date);
             } else {
-                if (dao.contains(datesTable, date)) {
+                if (dao != null && dao.contains(datesTable, date)) {
                     newDbDates.add(date);
                 }
             }

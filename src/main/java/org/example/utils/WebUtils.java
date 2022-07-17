@@ -1,7 +1,8 @@
-package org.example;
+package org.example.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import org.example.NasaException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,7 +12,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 
-import static org.example.Utils.splitJsonStringToMap;
+import static org.example.utils.Utils.splitJsonStringToMap;
 
 public class WebUtils {
 
@@ -56,6 +57,6 @@ public class WebUtils {
     public static String asteroidDescription(String singleAsteroid) throws IOException, NasaException {
         String selfLink = new Gson().fromJson(singleAsteroid, JsonObject.class).get("links").getAsJsonObject()
                 .get("self").getAsString();
-        return sendGetRequestAndRead(new URL(selfLink),0,0);
+        return sendGetRequestAndRead(new URL(selfLink), 0, 0);
     }
 }

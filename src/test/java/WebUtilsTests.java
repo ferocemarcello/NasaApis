@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import static org.example.WebUtils.sendGetRequest;
-import static org.example.WebUtils.sendGetRequestAndRead;
+import static org.example.utils.WebUtils.sendGetRequest;
+import static org.example.utils.WebUtils.sendGetRequestAndRead;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class WebUtilsTests {
