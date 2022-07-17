@@ -1,6 +1,7 @@
 package org.example;
 
 import org.ehcache.Cache;
+import spark.Response;
 
 import java.net.URL;
 import java.time.LocalDate;
@@ -36,8 +37,7 @@ public class Main {
             try {
                 dates = handleDatesParam(req.queryParams("fromDate"), req.queryParams("toDate"));
             } catch (Exception e) {
-                res.status(400);
-                res.body("Wrong Query Params");
+                editResponse(res, 400, "text/html", "Wrong Query Params");
                 return res.body();
             }
             String[] newDates = getNoCacheDates(dates[0], dates[1], CACHE_DATES);
@@ -50,20 +50,18 @@ public class Main {
                     put("end_date", newDates[1]);
                 }});
                 try {
-                    requestResponseMap = returnResponseMap(asteroidsUrl, CONNECTION_TIMEOUT, READ_TIMEOUT);
+                    requestResponseMap = returnResponseMap(
+                            asteroidsUrl, CONNECTION_TIMEOUT, READ_TIMEOUT);
                 } catch (NasaException e) {
-                    res.type(e.getContentType());
-                    res.body(e.getMessage());
-                    res.status(e.getResponseCode());
+                    editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
                     return res.body();
                 }
             } else requestResponseMap = new HashMap<>();
             Map<String, String> cacheMap = filterCacheToMap(datesInCache, CACHE_DATES);
             Map<String, String> toReturnAsteroids = combineResponses(cacheMap, requestResponseMap);
             putMapInCache(requestResponseMap, CACHE_DATES);
-            res.status(200);
-            res.body(prettyIndentJsonString(editAsteroidResponse(toReturnAsteroids)));
-            res.type("application/json");
+            editResponse(res, 200,"application/json",
+                    prettyIndentJsonString(editAsteroidResponse(toReturnAsteroids)));
             return res.body();
         });
         get("/asteroids/largest", (req, res) -> {
@@ -81,19 +79,16 @@ public class Main {
                     }
                 }});
                 try {
-                    yearResponse = asteroidDescription(editLargesAsteroidResponse(sendGetRequestAndRead(largestUrl, CONNECTION_TIMEOUT, READ_TIMEOUT), "near_earth_objects"));
+                    yearResponse = asteroidDescription(editLargesAsteroidResponse(
+                            sendGetRequestAndRead(largestUrl, CONNECTION_TIMEOUT, READ_TIMEOUT),
+                            "near_earth_objects"));
                     CACHE_YEARS.put(year, yearResponse);
                 } catch (NasaException e) {
-                    res.type(e.getContentType());
-                    res.body(e.getMessage());
-                    res.status(e.getResponseCode());
+                    editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
                     return res.body();
                 }
             }
-            res.type("application/json");
-            yearResponse = prettyIndentJsonString(yearResponse);
-            res.body(yearResponse);
-            res.status(200);
+            editResponse(res, 200, "application/json", prettyIndentJsonString(yearResponse));
             return res.body();
         });
         notFound((req, res) -> {
@@ -106,6 +101,12 @@ public class Main {
             res.type("application/json");
             return "Internal Server error";
         });
+    }
+
+    private static void editResponse(Response response, int status, String type, String body) {
+        response.status(status);
+        response.body(body);
+        response.type(type);
     }
 
     private static String[] handleDatesParam(String fromDate, String toDate) {
