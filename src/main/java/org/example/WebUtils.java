@@ -13,6 +13,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.example.Utils.prettyIndentJsonString;
+
 public class WebUtils {
     private static final int connectionTimeout = 60000;
     private static final int readTimeout = 60000;

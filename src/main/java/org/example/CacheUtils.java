@@ -22,13 +22,13 @@ public class CacheUtils {
         cacheManager.close();
     }
 
-    public static Cache<String, String> initCache(int cacheSize) {
+    public static Cache<String, String> initCache(int cacheSize, String cacheName) {
         statisticsService = new DefaultStatisticsService();
         cacheManager = CacheManagerBuilder
                 .newCacheManagerBuilder()
                 .using(statisticsService)
                 .withCache(
-                        "cache",
+                        cacheName,
                         CacheConfigurationBuilder.newCacheConfigurationBuilder(
                                 String.class,
                                 String.class,
@@ -38,7 +38,7 @@ public class CacheUtils {
         cacheManager.init();
 
         return cacheManager.getCache(
-                "cache", String.class, String.class
+                cacheName, String.class, String.class
         );
     }
 
@@ -90,7 +90,7 @@ public class CacheUtils {
                 (dateEnd.isEqual(date) || dateEnd.isAfter(date));
     }
 
-    public static String[] getCacheDates(String dateFrom, String dateTo, Cache<String, String> cache) {
+    public static String[] getDatesInCache(String dateFrom, String dateTo, Cache<String, String> cache) {
         CacheStatistics ehCacheStat = statisticsService.getCacheStatistics("cache");
         long cacheSize = ehCacheStat.getTierStatistics().get("OnHeap").getMappings();
         if (cacheSize == 0) return new String[]{};

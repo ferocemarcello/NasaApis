@@ -1,10 +1,7 @@
 package org.example;
 
 import org.ehcache.Cache;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -17,20 +14,19 @@ import static spark.Spark.*;
 
 public class Main {
     public final static String NASA_HOST = "https://api.nasa.gov/neo/rest/v1/feed";
-    public final static int cacheSize = 30;
+    public static int cacheDatesSize;
+    public static int cacheYearsSize;
     public static String NASA_API_KEY;
-    public static Cache<String, String> cache;
+    public static Cache<String, String> cacheDates;
+    public static Cache<String, String> cacheYears;
 
     public static void main(String[] args) {
-        cache = initCache(cacheSize);
-
-        try {
-            NASA_API_KEY = (String) ((Map<String, Object>)
-                    (new Yaml().load(new FileInputStream("keys.yml")))).get("api_key");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        port(8080);
+        cacheDatesSize = Integer.parseInt(args[1]);
+        cacheYearsSize = Integer.parseInt(args[2]);
+        cacheDates = initCache(cacheDatesSize, "cacheDates");
+        cacheYears = initCache(cacheDatesSize, "cacheYears");
+        port(Integer.parseInt(args[0]));
+        NASA_API_KEY = args[3];
         get("/asteroids/dates", (req, res) -> {
             String[] dates;
             try {
@@ -40,8 +36,8 @@ public class Main {
                 res.body("Wrong Query Params");
                 return res.body();
             }
-            String[] newDates = getNoCacheDates(dates[0], dates[1], cache);
-            String[] cacheDates = getCacheDates(dates[0], dates[1], cache);
+            String[] newDates = getNoCacheDates(dates[0], dates[1], cacheDates);
+            String[] datesInCache = getDatesInCache(dates[0], dates[1], cacheDates);
             Map<String, String> requestResponseMap;
             if (newDates != null) {
                 URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
@@ -58,30 +54,43 @@ public class Main {
                     return res.body();
                 }
             } else requestResponseMap = new HashMap<>();
-            Map<String, String> cacheMap = filterCacheToMap(cacheDates, cache);
+            Map<String, String> cacheMap = filterCacheToMap(datesInCache, cacheDates);
             Map<String, String> toReturnAsteroids = combineResponses(cacheMap, requestResponseMap);
-            putMapInCache(requestResponseMap, cache);
+            putMapInCache(requestResponseMap, cacheDates);
             res.status(200);
             res.body(editAsteroidResponse(toReturnAsteroids));
             res.type("application/json");
             return res.body();
         });
         get("/asteroids/largest", (req, res) -> {
-            URL largestUrl = buildUrl(NASA_HOST, new HashMap<>() {{
-                put("api_key", NASA_API_KEY);
-                if (req.queryParams("year") != null) {
-                    put("fromDate", req.queryParams("year") + "-01-01");
-                    put("toDate", req.queryParams("year") + "-12-31");
-                }
-            }});
-            try {
-                return asteroidDescription(editLargesAsteroidResponse(returnResponse(largestUrl)));
-            } catch (NasaException e) {
-                res.type(e.getContentType());
-                res.body(e.getMessage());
-                res.status(e.getResponseCode());
-                return res.body();
+            String year = req.queryParams("year");
+            String yearResponse;
+            if(cacheYears.containsKey(year)) {
+                yearResponse = cacheYears.get(year);
             }
+            else {
+                URL largestUrl = buildUrl(NASA_HOST, new HashMap<>() {{
+                    put("api_key", NASA_API_KEY);
+                    if (req.queryParams("year") != null) {
+                        put("fromDate", year + "-01-01");
+                        put("toDate", year + "-12-31");
+                    }
+                }});
+                try {
+                    yearResponse = asteroidDescription(editLargesAsteroidResponse(returnResponse(largestUrl)));
+                    cacheYears.put(year, yearResponse);
+                } catch (NasaException e) {
+                    res.type(e.getContentType());
+                    res.body(e.getMessage());
+                    res.status(e.getResponseCode());
+                    return res.body();
+                }
+            }
+            res.type("application/json");
+            yearResponse = prettyIndentJsonString(yearResponse);
+            res.body(yearResponse);
+            res.status(200);
+            return res.body();
         });
         notFound((req, res) -> {
             res.type("text/html");

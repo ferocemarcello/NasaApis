@@ -58,7 +58,7 @@ public class Utils {
                     }
                 }
             }
-            return prettyIndentJsonString(String.valueOf(largestAsteroid));
+            return String.valueOf(largestAsteroid);
         }
         return jsonResponse;
     }
