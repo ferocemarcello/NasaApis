@@ -43,12 +43,33 @@ Final result should consist of:
 2. A service deployed to a cloud provider of your choice using IaC approach.
     1. This is optional — only do it if you would like to demonstrate your DevOps skills.
     
-To run the server, use the jar available in the root folder.
+
+
+
+
+To run the server, you can either use the jar available in the root folder or use the app deployed online.
+
+
+Local jar:
+
+
 run it from the terminal with the following command:
 
 java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {nasa-api-key} {port-number} [cache-size-for-asteroids-in-date-range] [cache-size-for-largest-asteroid-description-in-year] [path-to-file-with-db-config]
 
-Once the server is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
+Once the server(localhost) is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
+
+
+Online
+
+
+It is deployed on Heroku. It is available here https://asteroidspark.herokuapp.com.
+
+The port is 8080. The number of days in the cache for the dates request is 20 while the cache holds at max 5 years. These parameters are customizable in the jar version.
+
+Be aware that for the largest asteroid of the year(ex: "https://asteroidspark.herokuapp.com/asteroids/largest?year=2021") you might have to wait about one minute or might encouter error and you'll have to try again. This is because NASA allows only requests for date ranges no longer than 8 days, so one has to do about 50 requests to NASA and it takes time.
+
+
 You can append:
     
     - /asteroids/dates?fromDate={{fromDate}}&toDate={{toDate}} for list of asteroids during a date range (Example http://localhost:8080/asteroids/dates?fromDate=2021-01-01&toDate=2021-01-06)
@@ -65,3 +86,9 @@ Example:
         Request 2: fromDate=2021-01-01&toDate=2021-01-05 works
         
         Request 3: fromDate=2021-01-01&toDate=2021-01-10 works if the cache size is at least 3
+    
+Example URLs : 
+        http://localhost:8080/asteroids/largest?year=2021
+        http://localhost:8080/asteroids/dates?fromDate=2022-01-01&toDate=2022-01-07
+        https://asteroidspark.herokuapp.com/asteroids/dates?fromDate=2022-01-01&toDate=2022-01-07
+        https://asteroidspark.herokuapp.com/asteroids/largest?year=2021
