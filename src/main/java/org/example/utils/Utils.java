@@ -68,6 +68,7 @@ public class Utils {
         mapOne.putAll(mapTwo);
         return mapOne;
     }
+
     public static Map<String, String> splitJsonStringToMap(String response, String arrayKey) {
         Map<String, String> map = new HashMap<>();
         JsonObject asteroids = new Gson().fromJson(response, JsonObject.class);

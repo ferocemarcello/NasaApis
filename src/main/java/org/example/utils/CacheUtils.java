@@ -7,18 +7,15 @@ import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.CacheManagerBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.core.spi.service.StatisticsService;
-import org.ehcache.core.statistics.CacheStatistics;
 import org.ehcache.impl.internal.statistics.DefaultStatisticsService;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
-import static org.example.Main.CACHE_DATES_NAME;
-
 public class CacheUtils {
-    private static CacheManager CACHE_MANAGER;
     private static final StatisticsService STATISTICS_SERVICE = new DefaultStatisticsService();
+    private static CacheManager CACHE_MANAGER;
 
     public static void stopCache() {
         CACHE_MANAGER.close();
@@ -42,15 +39,17 @@ public class CacheUtils {
         );
     }
 
-    public static String[] getNoCacheDates(String dateFrom, String dateTo, Cache<String, String> cache) {
-        CacheStatistics ehCacheStat = STATISTICS_SERVICE.getCacheStatistics(CACHE_DATES_NAME);
-        long cacheSize = ehCacheStat.getTierStatistics().get("OnHeap").getMappings();
-        if (cacheSize == 0) return new String[]{dateFrom, dateTo};
-
-        List<String> allCacheDates = getAllDatesFromCache(cache);
-        Collections.sort(allCacheDates);
-        LocalDate firsDateCache = LocalDate.parse(allCacheDates.get(0));
-        LocalDate lastDateCache = LocalDate.parse(allCacheDates.get(allCacheDates.size() - 1));
+    public static String[] getNoCacheDates(String dateFrom, String dateTo, String[] datesInCache,
+                                           String[] datesInDb) {
+        List<String> allCacheDates = Arrays.stream(datesInCache).toList();
+        List<String> allDbDates = Arrays.stream(datesInDb).toList();
+        Set<String> dateSet = new HashSet<>(allCacheDates);
+        dateSet.addAll(allDbDates);
+        LinkedList<String> cacheDbDates = new LinkedList<>(dateSet.stream().toList());
+        Collections.sort(cacheDbDates);
+        if (cacheDbDates.size() <= 0) return new String[]{dateFrom, dateTo};
+        LocalDate firsDateCache = LocalDate.parse(cacheDbDates.get(0));
+        LocalDate lastDateCache = LocalDate.parse(cacheDbDates.get(cacheDbDates.size() - 1));
         LocalDate requestedStartDate = LocalDate.parse(dateFrom);
         LocalDate requestedEndDate = LocalDate.parse(dateTo);
         LocalDate startDateNew = requestedStartDate;
@@ -90,19 +89,23 @@ public class CacheUtils {
                 (dateEnd.isEqual(date) || dateEnd.isAfter(date));
     }
 
-    public static String[] getDatesInCache(String dateFrom, String dateTo, Cache<String, String> cache) {
-        CacheStatistics ehCacheStat = STATISTICS_SERVICE.getCacheStatistics(CACHE_DATES_NAME);
-        long cacheSize = ehCacheStat.getTierStatistics().get("OnHeap").getMappings();
-        if (cacheSize == 0) return new String[]{};
+    public static Pair<String[], String[]> getDatesInCacheDb
+            (String dateFrom, String dateTo, Cache<String, String> cache, DAO dao, String datesTable) {
         List<String> newCacheDates = new ArrayList<>();
+        List<String> newDbDates = new ArrayList<>();
         List<String> allCacheDates = getAllDatesFromCache(cache);
         allCacheDates.forEach(date -> {
             if (isDateInInterval(LocalDate.parse(date), LocalDate.parse(dateFrom),
                     LocalDate.parse(dateTo))) {
                 newCacheDates.add(date);
+            } else {
+                if (dao.contains(datesTable, date)) {
+                    newDbDates.add(date);
+                }
             }
         });
-        return newCacheDates.toArray(new String[]{});
+        return new Pair<>
+                (newCacheDates.toArray(new String[]{}), newDbDates.toArray(new String[]{}));
     }
 
     public static Map<String, String> filterCacheToMap(String[] cacheDates, Cache<String, String> cache) {
@@ -114,5 +117,10 @@ public class CacheUtils {
             }
         }));
         return map;
+    }
+
+    private long getCacheSize(String cacheName) {
+        return STATISTICS_SERVICE.getCacheStatistics(cacheName).getTierStatistics()
+                .get("OnHeap").getMappings();
     }
 }

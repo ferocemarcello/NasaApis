@@ -1,7 +1,6 @@
 package org.example;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import java.io.BufferedReader;
@@ -10,7 +9,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.example.Utils.splitJsonStringToMap;
