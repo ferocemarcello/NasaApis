@@ -91,3 +91,9 @@ Example URLs :
         http://localhost:8080/asteroids/dates?fromDate=2022-01-01&toDate=2022-01-07
         https://asteroidspark.herokuapp.com/asteroids/dates?fromDate=2022-01-01&toDate=2022-01-07
         https://asteroidspark.herokuapp.com/asteroids/largest?year=2021
+        
+     
+Unit tests are availble in https://github.com/ferocemarcello/spondAssignment/tree/main/src/test/java. Integration tests would require to start the app and hit the app to see the results.
+
+
+Databases can be added with few lines of code. All the logic is there and one just need to connect with the database and write few lines of code for Select * FROM TABLE WHERE KEY=KEY, INSERT INTO TABLE
