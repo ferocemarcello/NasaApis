@@ -43,8 +43,7 @@ Final result should consist of:
 2. A service deployed to a cloud provider of your choice using IaC approach.
     1. This is optional — only do it if you would like to demonstrate your DevOps skills.
     
-
-
+# Solution
 
 
 To run the server, you can either use the jar available in the root folder or use the app deployed online.
