@@ -11,7 +11,6 @@ import org.apache.http.client.utils.URIBuilder;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
 import java.util.Map;
 
 public class Utils {
@@ -29,17 +28,18 @@ public class Utils {
     }
 
     public static String editAsteroidResponse(Map<String, String> json) throws JsonProcessingException {
-            JsonArray asteroidArray = new JsonArray(10);
-            for (Map.Entry<String, String> date : json.entrySet()) {
+        JsonArray asteroidArray = new JsonArray(10);
+        for (Map.Entry<String, String> date : json.entrySet()) {
+            if (asteroidArray.size() >= 10) break;
+            for (JsonElement asteroid : new Gson().fromJson(date.getValue(), JsonArray.class)) {
                 if (asteroidArray.size() >= 10) break;
-                for (Map.Entry<String, JsonElement> asteroid : new Gson().fromJson(date.getValue(), JsonObject.class).entrySet()) {
-                    asteroid.getValue().getAsJsonObject().addProperty("date", date.getKey());
-                    asteroidArray.add(asteroid.getValue());
-                    if (asteroidArray.size() >= 10) break;
-                }
+                asteroid.getAsJsonObject().addProperty("date", date.getKey());
+                asteroidArray.add(asteroid);
             }
-            return prettyIndentJsonString(String.valueOf(asteroidArray));
+        }
+        return prettyIndentJsonString(String.valueOf(asteroidArray));
     }
+
     public static String editLargesAsteroidResponse(String jsonResponse) throws JsonProcessingException {
         JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)
                 .get("near_earth_objects");
@@ -48,11 +48,11 @@ public class Utils {
             JsonElement largestAsteroid = null;
             for (Map.Entry<String, JsonElement> date : asteroids.entrySet()) {
                 for (JsonElement asteroid : date.getValue().getAsJsonArray()) {
-                    JsonObject estimatedDiameter = asteroid.getAsJsonObject().get("estimated_diameter").
-                            getAsJsonObject().get("meters").getAsJsonObject();
-                    double estimatedDiameterAverage = (estimatedDiameter.get("estimated_diameter_max").
-                            getAsDouble() - estimatedDiameter.get("estimated_diameter_min").getAsDouble()) / 2;
-                    if(estimatedDiameterAverage > maxDiameter) {
+                    JsonObject estimatedDiameter = asteroid.getAsJsonObject()
+                            .get("estimated_diameter").getAsJsonObject().get("meters").getAsJsonObject();
+                    double estimatedDiameterAverage = (estimatedDiameter.get("estimated_diameter_max")
+                            .getAsDouble() - estimatedDiameter.get("estimated_diameter_min").getAsDouble()) / 2;
+                    if (estimatedDiameterAverage > maxDiameter) {
                         maxDiameter = estimatedDiameterAverage;
                         largestAsteroid = asteroid;
                     }
@@ -63,13 +63,8 @@ public class Utils {
         return jsonResponse;
     }
 
-    public static String combineAsteroidStrings(List<String> arraysOfArrays) {
-        JsonArray jsonArray = new JsonArray();
-        for (String asteroidArray: arraysOfArrays) {
-            for (JsonElement jsonElement:new Gson().fromJson(asteroidArray, JsonObject.class).getAsJsonArray()) {
-                jsonArray.add(jsonElement);
-            }
-        }
-        return jsonArray.getAsString();
+    public static Map<String, String> combineResponses(Map<String, String> mapOne, Map<String, String> mapTwo) {
+        mapOne.putAll(mapTwo);
+        return mapOne;
     }
 }

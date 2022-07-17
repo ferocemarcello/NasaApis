@@ -1,32 +1,28 @@
 package org.example;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import org.ehcache.Cache;
 import org.yaml.snakeyaml.Yaml;
-import spark.Response;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.example.CacheUtils.*;
 import static org.example.Utils.*;
-import static org.example.WebUtils.asteroidDescription;
-import static org.example.WebUtils.returnResponse;
+import static org.example.WebUtils.*;
 import static spark.Spark.*;
 
 public class Main {
-    public static String NASA_API_KEY;
     public final static String NASA_HOST = "https://api.nasa.gov/neo/rest/v1/feed";
     public final static int cacheSize = 30;
+    public static String NASA_API_KEY;
+    public static Cache<String, String> cache;
 
-    public static void main(String[] args){
-        Cache<String, String> cache = initCache(cacheSize);
+    public static void main(String[] args) {
+        cache = initCache(cacheSize);
 
         try {
             NASA_API_KEY = (String) ((Map<String, Object>)
@@ -39,36 +35,39 @@ public class Main {
             String[] dates;
             try {
                 dates = handleDatesParam(req.queryParams("fromDate"), req.queryParams("toDate"));
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 res.status(400);
                 res.body("Wrong Query Params");
                 return res.body();
             }
             String[] newDates = getNoCacheDates(dates[0], dates[1], cache);
             String[] cacheDates = getCacheDates(dates[0], dates[1], cache);
-
-            List<URL> urlsToHit = new ArrayList<>();
-            URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
-                put("api_key", NASA_API_KEY);
-                put("start_date", newDates[0]);
-                put("end_date", newDates[1]);
-            }});
-            urlsToHit.add(asteroidsUrl);
-            try {
-                /*List<String> allResponses = new ArrayList<>(Arrays.asList(returnResponse(asteroidsUrl, res).body()
-                        ,returnResponse(asteroidsUrltt, res).body()));*/
-                //String asteroidString = combineAsteroidStrings(allResponses);
-                Map<String,String> toReturnAsteroids = filterCacheToMap(cacheDates, cache);
-                toReturnAsteroids = combineResponses(newDates, cache, toReturnAsteroids);
-
-                return editAsteroidResponse(toReturnAsteroids);
-            } catch (NasaException e) {
-                return handleNasaException(e, res).body();
-            }
+            Map<String, String> requestResponseMap;
+            if (newDates != null) {
+                URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
+                    put("api_key", NASA_API_KEY);
+                    put("start_date", newDates[0]);
+                    put("end_date", newDates[1]);
+                }});
+                try {
+                    requestResponseMap = returnResponseMap(asteroidsUrl);
+                } catch (NasaException e) {
+                    res.type(e.getContentType());
+                    res.body(e.getMessage());
+                    res.status(e.getResponseCode());
+                    return res.body();
+                }
+            } else requestResponseMap = new HashMap<>();
+            Map<String, String> cacheMap = filterCacheToMap(cacheDates, cache);
+            Map<String, String> toReturnAsteroids = combineResponses(cacheMap, requestResponseMap);
+            putMapInCache(requestResponseMap, cache);
+            res.status(200);
+            res.body(editAsteroidResponse(toReturnAsteroids));
+            res.type("application/json");
+            return res.body();
         });
         get("/asteroids/largest", (req, res) -> {
-            URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
+            URL largestUrl = buildUrl(NASA_HOST, new HashMap<>() {{
                 put("api_key", NASA_API_KEY);
                 if (req.queryParams("year") != null) {
                     put("fromDate", req.queryParams("year") + "-01-01");
@@ -76,9 +75,12 @@ public class Main {
                 }
             }});
             try {
-                return asteroidDescription(editLargesAsteroidResponse(returnResponse(asteroidsUrl)));
+                return asteroidDescription(editLargesAsteroidResponse(returnResponse(largestUrl)));
             } catch (NasaException e) {
-                return handleNasaException(e, res).body();
+                res.type(e.getContentType());
+                res.body(e.getMessage());
+                res.status(e.getResponseCode());
+                return res.body();
             }
         });
         notFound((req, res) -> {
@@ -93,38 +95,10 @@ public class Main {
         });
     }
 
-    private static Map<String, String> combineResponses(String[] newDates, Cache<String, String> cache, Map<String, String> toReturnAsteroids) throws NasaException, IOException {
-        List<URL> urlsToHit = getUrlsFromDates(newDates);
-        for (URL url:urlsToHit) {
-            String responseBody = returnResponse(url);
-            JsonObject respJson = (JsonObject) new Gson().fromJson(responseBody, JsonObject.class).get("near_earth_objects");
-            for (Map.Entry<String, JsonElement> date :respJson.entrySet()) {
-                cache.put(date.getKey(), date.getValue().toString());
-            }
-        }
-        return new HashMap<>();
-    }
-
-    private static List<URL> getUrlsFromDates(String[] newDates) {
-        return new ArrayList<>();
-    }
-
-
     private static String[] handleDatesParam(String fromDate, String toDate) {
         LocalDate.parse(fromDate);
-        try {
-            LocalDate.parse(toDate);
-        }
-        catch (Exception e) {
-            toDate = LocalDate.parse(fromDate).plusWeeks(1).toString();
-        }
+        if (toDate == null) toDate = LocalDate.parse(fromDate).plusWeeks(1).toString();
+        LocalDate.parse(toDate);
         return new String[]{fromDate, toDate};
-    }
-
-    private static Response handleNasaException(NasaException e, Response res) {
-        res.type("text/html");
-        res.body(e.getMessage());
-        res.status(e.getResponseCode());
-        return res;
     }
 }
