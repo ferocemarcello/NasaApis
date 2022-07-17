@@ -14,19 +14,20 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
+import static org.example.Main.CACHE_DATES_NAME;
+
 public class CacheUtils {
-    private static CacheManager cacheManager;
-    private static StatisticsService statisticsService;
+    private static CacheManager CACHE_MANAGER;
+    private static final StatisticsService STATISTICS_SERVICE = new DefaultStatisticsService();
 
     public static void stopCache() {
-        cacheManager.close();
+        CACHE_MANAGER.close();
     }
 
     public static Cache<String, String> initCache(int cacheSize, String cacheName) {
-        statisticsService = new DefaultStatisticsService();
-        cacheManager = CacheManagerBuilder
+        CACHE_MANAGER = CacheManagerBuilder
                 .newCacheManagerBuilder()
-                .using(statisticsService)
+                .using(STATISTICS_SERVICE)
                 .withCache(
                         cacheName,
                         CacheConfigurationBuilder.newCacheConfigurationBuilder(
@@ -35,15 +36,14 @@ public class CacheUtils {
                                 ResourcePoolsBuilder.heap(cacheSize)
                         )
                 ).build();
-        cacheManager.init();
-
-        return cacheManager.getCache(
+        CACHE_MANAGER.init();
+        return CACHE_MANAGER.getCache(
                 cacheName, String.class, String.class
         );
     }
 
     public static String[] getNoCacheDates(String dateFrom, String dateTo, Cache<String, String> cache) {
-        CacheStatistics ehCacheStat = statisticsService.getCacheStatistics("cache");
+        CacheStatistics ehCacheStat = STATISTICS_SERVICE.getCacheStatistics(CACHE_DATES_NAME);
         long cacheSize = ehCacheStat.getTierStatistics().get("OnHeap").getMappings();
         if (cacheSize == 0) return new String[]{dateFrom, dateTo};
 
@@ -91,7 +91,7 @@ public class CacheUtils {
     }
 
     public static String[] getDatesInCache(String dateFrom, String dateTo, Cache<String, String> cache) {
-        CacheStatistics ehCacheStat = statisticsService.getCacheStatistics("cache");
+        CacheStatistics ehCacheStat = STATISTICS_SERVICE.getCacheStatistics(CACHE_DATES_NAME);
         long cacheSize = ehCacheStat.getTierStatistics().get("OnHeap").getMappings();
         if (cacheSize == 0) return new String[]{};
         List<String> newCacheDates = new ArrayList<>();

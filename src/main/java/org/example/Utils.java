@@ -11,6 +11,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Utils {
@@ -37,12 +38,12 @@ public class Utils {
                 asteroidArray.add(asteroid);
             }
         }
-        return prettyIndentJsonString(String.valueOf(asteroidArray));
+        return String.valueOf(asteroidArray);
     }
 
-    public static String editLargesAsteroidResponse(String jsonResponse) throws JsonProcessingException {
+    public static String editLargesAsteroidResponse(String jsonResponse, String arrayKey) throws JsonProcessingException {
         JsonObject asteroids = (JsonObject) new Gson().fromJson(jsonResponse, JsonObject.class)
-                .get("near_earth_objects");
+                .get(arrayKey);
         if (asteroids != null) {
             double maxDiameter = 0;
             JsonElement largestAsteroid = null;
@@ -66,5 +67,15 @@ public class Utils {
     public static Map<String, String> combineResponses(Map<String, String> mapOne, Map<String, String> mapTwo) {
         mapOne.putAll(mapTwo);
         return mapOne;
+    }
+    public static Map<String, String> splitJsonStringToMap(String response, String arrayKey) {
+        Map<String, String> map = new HashMap<>();
+        JsonObject asteroids = new Gson().fromJson(response, JsonObject.class);
+        if (asteroids.get(arrayKey) == null) return map;
+        for (Map.Entry<String, JsonElement> date : (asteroids.get(arrayKey))
+                .getAsJsonObject().entrySet()) {
+            map.put(date.getKey(), date.getValue().toString());
+        }
+        return map;
     }
 }
