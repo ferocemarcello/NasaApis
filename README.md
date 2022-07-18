@@ -80,7 +80,7 @@ It is deployed on Heroku. It is available here https://asteroidspark.herokuapp.c
 
 The port is 8080. The number of days in the cache for the dates request is 20 while the cache holds at max 5 years. These parameters are customizable in the jar version.
 
-Be aware that for the largest asteroid of the year(ex: "https://asteroidspark.herokuapp.com/asteroids/largest?year=2021") you might have to wait about one minute or might encouter error and you'll have to try again. This is because NASA allows only requests for date ranges no longer than 8 days, so one has to do about 50 requests to NASA and it takes time.
+Be aware that for the largest asteroid of the year(ex: "https://asteroidspark.herokuapp.com/asteroids/largest?year=2021") you might have to wait about one minute or might encouter error and you'll have to try again. This is because NASA allows only requests for date ranges no longer than 8 days, so one has to do about 50 requests to NASA and it takes time. It would be much faster if already in the cache or in the database.
 
 
 You can append:
@@ -94,8 +94,8 @@ You can't request a date range longer than 7 days unless some dates are already 
 
 Example, in sequence:
 
+
         Request 1: fromDate=2021-01-01&toDate=2021-01-10 throws error
-        
         Request 2: fromDate=2021-01-01&toDate=2021-01-05 works and puts data in the cache and database
         Request 3: fromDate=2021-01-06&toDate=2021-01-11 works and puts data in the cache and database
         Request 3: fromDate=2021-01-12&toDate=2021-01-18 works and puts data in the cache and database
@@ -112,7 +112,7 @@ Example URLs :
 Unit tests are availble in https://github.com/ferocemarcello/spondAssignment/tree/main/src/test/java. Integration tests would require to start the app and hit the app to see the results.
 
 
-Databases is added locally and its functioning has been tested.
+A postgres db is available on heroku.
 
 Example of Responses are available here:
 
