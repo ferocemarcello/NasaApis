@@ -23,6 +23,8 @@ public class Main {
     private static final String DATES_TABLE = "DATES";
     private static final int CONNECTION_TIMEOUT = 60000;
     private static final int READ_TIMEOUT = 60000;
+    private static final Pair<String, String> DATES_TABLE_COLUMNS = new Pair<>("date","asteroids");
+    private static final Pair<String, String> YEARS_TABLE_COLUMNS = new Pair<>("year","description");
     public static int CACHE_DATES_SIZE;
     public static int CACHE_YEARS_SIZE;
     public static String NASA_API_KEY;
@@ -81,7 +83,7 @@ public class Main {
             Map<String, String> cacheMap = filterCacheToMap(datesInCache, CACHE_DATES);
             Map<String, String> toReturnAsteroids = combineResponses(cacheMap, requestResponseMap);
             putMapInCache(requestResponseMap, CACHE_DATES);
-            if (DAO != null) DAO.putManyInDb(requestResponseMap.entrySet());
+            if (DAO != null) DAO.putManyInDb(requestResponseMap.entrySet(), new Pair<>(DATES_TABLE, DATES_TABLE_COLUMNS));
             editResponse(res, 200, "application/json",
                     prettyIndentJsonString(editAsteroidResponse(toReturnAsteroids)));
             return res.body();
