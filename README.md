@@ -118,3 +118,16 @@ Example of Responses are available here:
 
 - https://github.com/ferocemarcello/spondAssignment/blob/main/datesExampleResponse.json
 - https://github.com/ferocemarcello/spondAssignment/blob/main/yearLargestExampleResponse.json
+
+
+Other 4 APIs are available:
+
+
+
+/dates/closeCache :  closes the cache for the dates and returns the previous size
+
+/years/closeCache :  closes the cache for the years and returns the previous size
+
+/dates/cacheSize :   returns the current size of the cache for the dates
+
+/dates/cacheSize :   returns the current size of the cache for the years
