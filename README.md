@@ -59,11 +59,13 @@ java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {nasa-api-key} 
 The parameter path-to-file-with-db-config is the path to a .yml file, that should look like like this:
 
 
+```
 host : "your_host"
 port : "your_ort"
 user : "your_username"
 pwd : "your_password"
 db : "your_database_name"
+```
 
 for a postgres Database
 
