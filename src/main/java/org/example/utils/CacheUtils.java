@@ -21,8 +21,8 @@ public class CacheUtils {
     private static final StatisticsService STATISTICS_SERVICE = new DefaultStatisticsService();
     private static CacheManager CACHE_MANAGER;
 
-    public static void stopCache() {
-        CACHE_MANAGER.close();
+    public static void stopCache(Cache<String, String> cache) {
+        cache.clear();
     }
 
     public static Cache<String, String> initCache(int cacheSize, String cacheName) {
@@ -98,7 +98,8 @@ public class CacheUtils {
         List<String> newCacheDates = new ArrayList<>();
         List<String> newDbDates = new ArrayList<>();
         List<String> allCacheDates = getAllDatesFromCache(cache);
-        List<String> allDbDates = dao.get(datesTable,Main.DATES_TABLE_COLUMNS.getFirst());
+        List<String> allDbDates = new ArrayList<>();
+        if(dao!=null) allDbDates = dao.get(datesTable,Main.DATES_TABLE_COLUMNS.getFirst());
         Set<String> storedDates = new HashSet<>(allCacheDates);
         storedDates.addAll(allDbDates);
 
@@ -124,7 +125,7 @@ public class CacheUtils {
         return map;
     }
 
-    private long getCacheSize(String cacheName) {
+    public static long getCacheSize(String cacheName) {
         return STATISTICS_SERVICE.getCacheStatistics(cacheName).getTierStatistics()
                 .get("OnHeap").getMappings();
     }

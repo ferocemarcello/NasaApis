@@ -1,15 +1,15 @@
 package org.example;
 
 import org.ehcache.Cache;
+import org.example.utils.CacheUtils;
 import spark.Response;
 
 import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.example.utils.CacheUtils.*;
 import static org.example.utils.Utils.*;
@@ -50,6 +50,19 @@ public class Main {
                 DAO = null;
             }
         }
+        else {
+            try {
+                URI dbUri = new URI(System.getenv("DATABASE_URL"));
+                int dbport = dbUri.getPort();
+                String host = dbUri.getHost();
+                String db = dbUri.getPath().substring(1);
+                String username = (dbUri.getUserInfo() == null) ? null : dbUri.getUserInfo().split(":")[0];
+                String password = (dbUri.getUserInfo() == null) ? null : dbUri.getUserInfo().split(":")[1];
+                DAO = new DAO(new DbConfig(host,String.valueOf(dbport),username,password, db));
+            } catch (URISyntaxException ex) {
+                DAO = null;
+            }
+        }
         port(port);
         CACHE_DATES = initCache(CACHE_DATES_SIZE, CACHE_DATES_NAME);
         CACHE_YEARS = initCache(CACHE_YEARS_SIZE, CACHE_YEARS_NAME);
@@ -82,10 +95,12 @@ public class Main {
                 }
             } else requestResponseMap = new HashMap<>();
             Map<String, String> cacheMap = filterCacheToMap(datesInCache, CACHE_DATES);
-            Map<String, String> dbMap = DAO.filterDbToMap(DATES_TABLE, datesInDb, DATES_TABLE_COLUMNS.getFirst(),
+            Map<String, String> dbMap = new HashMap<>();
+            if(DAO!=null) dbMap = DAO.filterDbToMap(DATES_TABLE, datesInDb, DATES_TABLE_COLUMNS.getFirst(),
                     DATES_TABLE_COLUMNS.getSecond());
+            Map<String, String> finalDbMap = dbMap;
             Map<String, String> dbAndRequestMap = combineResponses(new ArrayList<>(){{add(requestResponseMap);
-                add(dbMap);}});
+                add(finalDbMap);}});
             Map<String, String> toReturnAsteroids = combineResponses(new ArrayList<>()
             {{add(dbAndRequestMap);add(cacheMap);}});
             putMapInCache(dbAndRequestMap, CACHE_DATES);
@@ -98,13 +113,15 @@ public class Main {
         get("/asteroids/largest", (req, res) -> {
             String year = req.queryParams("year");
             String yearResponse;
-            if (CACHE_YEARS.containsKey(year)) {
-                yearResponse = CACHE_YEARS.get(year);
+            boolean yearInCache = CACHE_YEARS.containsKey(year);
+            List<String> yearInDbResult = new ArrayList<>();
+            if(DAO!=null) yearInDbResult = DAO.getFromKey(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(), year),
+                    YEARS_TABLE_COLUMNS.getSecond());
+            boolean yearInDb = yearInDbResult.size()>0;
+            if (yearInCache || yearInDb) {
+                if(yearInCache) yearResponse = CACHE_YEARS.get(year);
+                else yearResponse = yearInDbResult.get(0);
             } else {
-                if (DAO != null && DAO.contains(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year)))
-                    yearResponse = DAO.getFromKey(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year),
-                            YEARS_TABLE_COLUMNS.getSecond()).get(0);
-                else {
                     List<URL> yearUrls = getNasaUrlsFromYear(year, NASA_HOST, NASA_API_KEY);
                     String largestAsteroid = null;
                     for (URL partYearUrl : yearUrls) {
@@ -123,11 +140,31 @@ public class Main {
                         editResponse(res, e.getResponseCode(), e.getContentType(), e.getMessage());
                         return res.body();
                     }
+                    HashSet<Map.Entry<String,String>> yearSetInDb = new HashSet<>();
+                    yearSetInDb.add(new AbstractMap.SimpleEntry<>(year,yearResponse));
+                    if(DAO!=null) DAO.putManyInDb(yearSetInDb, new Pair<>(YEAR_TABLE, YEARS_TABLE_COLUMNS));
                     CACHE_YEARS.put(year, yearResponse);
                 }
-            }
             editResponse(res, 200, "application/json", prettyIndentJsonString(yearResponse));
             return res.body();
+        });
+        get("/dates/closeCache", (req, res) -> {
+            long previousSize = getCacheSize(CACHE_DATES_NAME);
+            CacheUtils.stopCache(CACHE_DATES);
+            return "Cache for years has been stopped. Size of the cache is now 0. Previously it was +"+ previousSize;
+        });
+        get("/years/closeCache", (req, res) -> {
+            long previousSize = getCacheSize(CACHE_YEARS_NAME);
+            CacheUtils.stopCache(CACHE_YEARS);
+            return "Cache for years has been stopped. Size of the cache is now 0. Previously it was +"+ previousSize;
+        });
+        get("/dates/cacheSize", (req, res) -> {
+            long size = getCacheSize(CACHE_DATES_NAME);
+            return "Size of the cache is now "+ size;
+        });
+        get("/years/cacheSize", (req, res) -> {
+            long size = getCacheSize(CACHE_YEARS_NAME);
+            return "Size of the cache is now 0"+ size;
         });
         notFound((req, res) -> {
             res.type("text/html");

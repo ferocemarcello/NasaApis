@@ -11,7 +11,24 @@ import java.util.Map;
 public class DbConfig {
     private String host;
     private String port;
+
+    public DbConfig(String host, String port, String user, String pwd, String db) {
+        this.host = host;
+        this.port = port;
+        this.user = user;
+        this.pwd = pwd;
+        this.db = db;
+    }
+
     private String user;
+
+    public DbConfig(String host, String port, String user, String pwd) {
+        this.host = host;
+        this.port = port;
+        this.user = user;
+        this.pwd = pwd;
+    }
+
     private String pwd;
     private String db;
 

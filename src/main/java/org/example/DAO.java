@@ -1,5 +1,7 @@
 package org.example;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.*;
 import java.util.*;
 
@@ -12,16 +14,13 @@ public class DAO {
         this.dbConfig = dbConfig;
     }
 
-    public void connectToDb() {
+    public void connectToDb() throws SQLException {
+        if(dbConfig==null) return;
         String url = "jdbc:postgresql://"+this.dbConfig.getHost()+":"+this.dbConfig.getPort()
                 +"/"+this.dbConfig.getDb();
-        try {
-            this.connection = DriverManager.getConnection(url, this.dbConfig.getUser(),
-                    this.dbConfig.getPwd());
-            isConnected = true;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        this.connection = DriverManager.getConnection(url, this.dbConfig.getUser(),
+                this.dbConfig.getPwd());
+        isConnected = true;
     }
     public boolean disconnect() {
         try {
@@ -32,14 +31,23 @@ public class DAO {
         }
     }
 
-    public void putManyInDb(Set<Map.Entry<String, String>> set, Pair<String,Pair<String,String>> tableNameAndColumns) throws SQLException {//set of entries key-value
+    public void putInDb(String key, String val, Pair<String,Pair<String,String>> tableNameAndColumns) {
+
+    }
+    public void putManyInDb(Set<Map.Entry<String, String>> set, Pair<String,Pair<String,String>> tableNameAndColumns) throws SQLException {
+        if(!isConnected) {
+            try {
+                connectToDb();
+            } catch (SQLException e) {
+                return;
+            }
+        }
         if(set.size()<=0)return;
         String values = getSqlValues(set);
         String sql = "INSERT INTO "+tableNameAndColumns.getFirst() +" ("
                 +tableNameAndColumns.getSecond().getFirst()+", "
                 +tableNameAndColumns.getSecond().getSecond()+") VALUES "
                 +values+" ON CONFLICT DO NOTHING";
-        if(!isConnected)connectToDb();
         Statement st = connection.createStatement();
         st.execute(sql);
         st.close();
@@ -55,12 +63,14 @@ public class DAO {
         return values.toString();
     }
 
-    public void putInDb(String key, String val, Pair<String,Pair<String,String>> tableNameAndColumns) {
-
-    }
-
     public boolean contains(String table, Pair<String,String> keyNameValue) throws SQLException {
-        if(!isConnected)connectToDb();
+        if(!isConnected) {
+            try {
+                connectToDb();
+            } catch (SQLException e) {
+                return false;
+            }
+        }
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT * FROM "+table+" WHERE "+keyNameValue.getFirst()+"='"
                 +keyNameValue.getSecond()+"'");
@@ -71,7 +81,13 @@ public class DAO {
     }
 
     public List<String> getFromKey(String table, Pair<String,String> keyNameValue, String columnToRetrieve) throws SQLException {
-        if(!isConnected)connectToDb();
+        if(!isConnected) {
+            try {
+                connectToDb();
+            } catch (SQLException e) {
+                return new ArrayList<>();
+            }
+        }
         List<String> values = new LinkedList<>();
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT "+columnToRetrieve+" FROM "+table+" WHERE "+
@@ -85,7 +101,13 @@ public class DAO {
         return values;
     }
     public List<String> get(String table, String columnToRetrieve) throws SQLException {
-        if(!isConnected)connectToDb();
+        if(!isConnected) {
+            try {
+                connectToDb();
+            } catch (SQLException e) {
+                return new ArrayList<>();
+            }
+        }
         List<String> values = new LinkedList<>();
         Statement stmt = connection.createStatement();
         ResultSet rs = stmt.executeQuery("SELECT "+columnToRetrieve+" FROM "+table);
@@ -96,7 +118,13 @@ public class DAO {
         return values;
     }
     public Map<String, String> filterDbToMap(String table, String[] keys, String keyName, String columnToRetrieve) throws SQLException {
-        if(!isConnected)connectToDb();
+        if(!isConnected) {
+            try {
+                connectToDb();
+            } catch (SQLException e) {
+                return new HashMap<>();
+            }
+        }
         Map<String, String> map = new HashMap<>();
         for (String key: keys
              ) {
