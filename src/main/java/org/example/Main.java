@@ -3,6 +3,7 @@ package org.example;
 import org.ehcache.Cache;
 import spark.Response;
 
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -35,13 +36,18 @@ public class Main {
         int port;
         if (args.length >= 2) port = getHerokuAssignedPort(Integer.parseInt(args[1]));
         else port = getHerokuAssignedPort(8080);
-        port(port);
-
         if (args.length >= 3) CACHE_DATES_SIZE = Integer.parseInt(args[2]);
         else CACHE_DATES_SIZE = 30;
         if (args.length >= 4) CACHE_YEARS_SIZE = Integer.parseInt(args[3]);
         else CACHE_YEARS_SIZE = 20;
-        if (args.length >= 5) DAO = new DAO(new DbConfig(args[4]));//path to dbConfigFile
+        if (args.length >= 5) {
+            try {
+                DAO = new DAO(new DbConfig(args[4]));//path to dbConfigFile
+            } catch (FileNotFoundException e) {
+                DAO = null;
+            }
+        }
+        port(port);
         CACHE_DATES = initCache(CACHE_DATES_SIZE, CACHE_DATES_NAME);
         CACHE_YEARS = initCache(CACHE_YEARS_SIZE, CACHE_YEARS_NAME);
         get("/asteroids/dates", (req, res) -> {
