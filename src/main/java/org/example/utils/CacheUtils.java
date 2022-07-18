@@ -43,8 +43,8 @@ public class CacheUtils {
         );
     }
 
-    public static String[] getNoCacheDates(String dateFrom, String dateTo, String[] datesInCache,
-                                           String[] datesInDb) {
+    public static String[] getNoCacheDbDates(String dateFrom, String dateTo, String[] datesInCache,
+                                             String[] datesInDb) {
         List<String> allCacheDates = Arrays.stream(datesInCache).toList();
         List<String> allDbDates = Arrays.stream(datesInDb).toList();
         Set<String> dateSet = new HashSet<>(allCacheDates);
@@ -52,27 +52,27 @@ public class CacheUtils {
         LinkedList<String> cacheDbDates = new LinkedList<>(dateSet.stream().toList());
         Collections.sort(cacheDbDates);
         if (cacheDbDates.size() <= 0) return new String[]{dateFrom, dateTo};
-        LocalDate firsDateCache = LocalDate.parse(cacheDbDates.get(0));
-        LocalDate lastDateCache = LocalDate.parse(cacheDbDates.get(cacheDbDates.size() - 1));
+        LocalDate firsDateCacheDb = LocalDate.parse(cacheDbDates.get(0));
+        LocalDate lastDateCacheDb = LocalDate.parse(cacheDbDates.get(cacheDbDates.size() - 1));
         LocalDate requestedStartDate = LocalDate.parse(dateFrom);
         LocalDate requestedEndDate = LocalDate.parse(dateTo);
         LocalDate startDateNew = requestedStartDate;
         LocalDate endDateNew = requestedEndDate;
 
-        boolean isRequestedStartDateInCache = (requestedStartDate.isEqual(firsDateCache)
-                || requestedStartDate.isAfter(firsDateCache)) &&
-                (requestedStartDate.isEqual(lastDateCache) || requestedStartDate.isBefore(lastDateCache));
-        boolean isRequestedEndDateInCache = (requestedEndDate.isEqual(lastDateCache)
-                || requestedEndDate.isBefore(lastDateCache)) &&
-                (requestedEndDate.isEqual(firsDateCache) || requestedEndDate.isAfter(firsDateCache));
+        boolean isRequestedStartDateInCache = (requestedStartDate.isEqual(firsDateCacheDb)
+                || requestedStartDate.isAfter(firsDateCacheDb)) &&
+                (requestedStartDate.isEqual(lastDateCacheDb) || requestedStartDate.isBefore(lastDateCacheDb));
+        boolean isRequestedEndDateInCache = (requestedEndDate.isEqual(lastDateCacheDb)
+                || requestedEndDate.isBefore(lastDateCacheDb)) &&
+                (requestedEndDate.isEqual(firsDateCacheDb) || requestedEndDate.isAfter(firsDateCacheDb));
 
         if (isRequestedStartDateInCache && isRequestedEndDateInCache) return null;
         if (isRequestedStartDateInCache) {
-            startDateNew = lastDateCache.plusDays(1);
+            startDateNew = lastDateCacheDb.plusDays(1);
             return new String[]{startDateNew.toString(), endDateNew.toString()};
         }
         if (isRequestedEndDateInCache) {
-            endDateNew = firsDateCache.minusDays(1);
+            endDateNew = firsDateCacheDb.minusDays(1);
             return new String[]{startDateNew.toString(), endDateNew.toString()};
         }
         return new String[]{requestedStartDate.toString(), requestedEndDate.toString()};
@@ -94,22 +94,19 @@ public class CacheUtils {
     }
 
     public static Pair<String[], String[]> getDatesInCacheDb
-            (String dateFrom, String dateTo, Cache<String, String> cache, DAO dao, String datesTable) {
+            (String dateFrom, String dateTo, Cache<String, String> cache, DAO dao, String datesTable) throws SQLException {
         List<String> newCacheDates = new ArrayList<>();
         List<String> newDbDates = new ArrayList<>();
         List<String> allCacheDates = getAllDatesFromCache(cache);
-        allCacheDates.forEach(date -> {
+        List<String> allDbDates = dao.get(datesTable,Main.DATES_TABLE_COLUMNS.getFirst());
+        Set<String> storedDates = new HashSet<>(allCacheDates);
+        storedDates.addAll(allDbDates);
+
+        storedDates.forEach(date -> {
             if (isDateInInterval(LocalDate.parse(date), LocalDate.parse(dateFrom),
                     LocalDate.parse(dateTo))) {
-                newCacheDates.add(date);
-            } else {
-                try {
-                    if (dao != null && dao.contains(datesTable, new Pair<>(Main.DATES_TABLE_COLUMNS.getFirst(),date))) {
-                        newDbDates.add(date);
-                    }
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
-                }
+                if(allCacheDates.contains(date))newCacheDates.add(date);
+                else newDbDates.add(date);
             }
         });
         return new Pair<>

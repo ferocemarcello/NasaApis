@@ -6,6 +6,7 @@ import spark.Response;
 import java.io.FileNotFoundException;
 import java.net.URL;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +65,7 @@ public class Main {
                     CACHE_DATES, DAO, DATES_TABLE);
             String[] datesInCache = datesInCacheAndDb.getFirst();
             String[] datesInDb = datesInCacheAndDb.getSecond();
-            String[] datesToRequest = getNoCacheDates(dates[0], dates[1], datesInCache, datesInDb);
+            String[] datesToRequest = getNoCacheDbDates(dates[0], dates[1], datesInCache, datesInDb);
             Map<String, String> requestResponseMap;
             if (datesToRequest != null) {
                 URL asteroidsUrl = buildUrl(NASA_HOST, new HashMap<>() {{
@@ -81,9 +82,15 @@ public class Main {
                 }
             } else requestResponseMap = new HashMap<>();
             Map<String, String> cacheMap = filterCacheToMap(datesInCache, CACHE_DATES);
-            Map<String, String> toReturnAsteroids = combineResponses(cacheMap, requestResponseMap);
-            putMapInCache(requestResponseMap, CACHE_DATES);
-            if (DAO != null) DAO.putManyInDb(requestResponseMap.entrySet(), new Pair<>(DATES_TABLE, DATES_TABLE_COLUMNS));
+            Map<String, String> dbMap = DAO.filterDbToMap(DATES_TABLE, datesInDb, DATES_TABLE_COLUMNS.getFirst(),
+                    DATES_TABLE_COLUMNS.getSecond());
+            Map<String, String> dbAndRequestMap = combineResponses(new ArrayList<>(){{add(requestResponseMap);
+                add(dbMap);}});
+            Map<String, String> toReturnAsteroids = combineResponses(new ArrayList<>()
+            {{add(dbAndRequestMap);add(cacheMap);}});
+            putMapInCache(dbAndRequestMap, CACHE_DATES);
+            if (DAO != null) DAO.putManyInDb(requestResponseMap.entrySet(), new Pair<>(DATES_TABLE,
+                    DATES_TABLE_COLUMNS));
             editResponse(res, 200, "application/json",
                     prettyIndentJsonString(editAsteroidResponse(toReturnAsteroids)));
             return res.body();
@@ -95,8 +102,8 @@ public class Main {
                 yearResponse = CACHE_YEARS.get(year);
             } else {
                 if (DAO != null && DAO.contains(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year)))
-                    yearResponse = DAO.get(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year),
-                            YEARS_TABLE_COLUMNS.getSecond());
+                    yearResponse = DAO.getFromKey(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year),
+                            YEARS_TABLE_COLUMNS.getSecond()).get(0);
                 else {
                     List<URL> yearUrls = getNasaUrlsFromYear(year, NASA_HOST, NASA_API_KEY);
                     String largestAsteroid = null;

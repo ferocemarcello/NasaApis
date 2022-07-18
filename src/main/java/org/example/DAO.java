@@ -1,8 +1,7 @@
 package org.example;
 
 import java.sql.*;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class DAO {
     private final DbConfig dbConfig;
@@ -71,14 +70,38 @@ public class DAO {
         return isIn;
     }
 
-    public String get(String table, Pair<String,String> keyNameValue, String columnToRetrieve) throws SQLException {
+    public List<String> getFromKey(String table, Pair<String,String> keyNameValue, String columnToRetrieve) throws SQLException {
         if(!isConnected)connectToDb();
+        List<String> values = new LinkedList<>();
         Statement stmt = connection.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM "+table+" WHERE "+
+        ResultSet rs = stmt.executeQuery("SELECT "+columnToRetrieve+" FROM "+table+" WHERE "+
                 keyNameValue.getFirst()+"='"+keyNameValue.getSecond()+"'");
-        String val = rs.getString(1);
+
+        while (rs.next()){
+            values.add(rs.getString(columnToRetrieve));
+        }
         rs.close();
         stmt.close();
-        return val;
+        return values;
+    }
+    public List<String> get(String table, String columnToRetrieve) throws SQLException {
+        if(!isConnected)connectToDb();
+        List<String> values = new LinkedList<>();
+        Statement stmt = connection.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT "+columnToRetrieve+" FROM "+table);
+
+        while (rs.next()) values.add(rs.getString(columnToRetrieve));
+        rs.close();
+        stmt.close();
+        return values;
+    }
+    public Map<String, String> filterDbToMap(String table, String[] keys, String keyName, String columnToRetrieve) throws SQLException {
+        if(!isConnected)connectToDb();
+        Map<String, String> map = new HashMap<>();
+        for (String key: keys
+             ) {
+            map.put(key,this.getFromKey(table, new Pair<>(keyName,key), columnToRetrieve).get(0));
+        }
+        return map;
     }
 }

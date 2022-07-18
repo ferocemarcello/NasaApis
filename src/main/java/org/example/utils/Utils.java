@@ -110,9 +110,10 @@ public class Utils {
         return jsonResponse;
     }
 
-    public static Map<String, String> combineResponses(Map<String, String> mapOne, Map<String, String> mapTwo) {
-        mapOne.putAll(mapTwo);
-        return mapOne;
+    public static Map<String, String> combineResponses(List<Map<String, String>> mapList) {
+        Map<String, String> newMap = new HashMap<>();
+        mapList.forEach(newMap::putAll);
+        return newMap;
     }
 
     public static Map<String, String> splitJsonStringToMap(String response, String arrayKey) {
