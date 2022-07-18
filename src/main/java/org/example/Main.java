@@ -20,11 +20,11 @@ public class Main {
     public final static String YEAR_TABLE = "YEARS";
     public static final String CACHE_DATES_NAME = "cacheDates";
     public static final String CACHE_YEARS_NAME = "cacheYears";
-    private static final String DATES_TABLE = "DATES";
+    public static final String DATES_TABLE = "DATES";
     private static final int CONNECTION_TIMEOUT = 60000;
     private static final int READ_TIMEOUT = 60000;
-    private static final Pair<String, String> DATES_TABLE_COLUMNS = new Pair<>("date","asteroids");
-    private static final Pair<String, String> YEARS_TABLE_COLUMNS = new Pair<>("year","description");
+    public static final Pair<String, String> DATES_TABLE_COLUMNS = new Pair<>("date","asteroids");
+    public static final Pair<String, String> YEARS_TABLE_COLUMNS = new Pair<>("year","description");
     public static int CACHE_DATES_SIZE;
     public static int CACHE_YEARS_SIZE;
     public static String NASA_API_KEY;
@@ -94,7 +94,9 @@ public class Main {
             if (CACHE_YEARS.containsKey(year)) {
                 yearResponse = CACHE_YEARS.get(year);
             } else {
-                if (DAO != null && DAO.contains(YEAR_TABLE, year)) yearResponse = DAO.get(YEAR_TABLE, year);
+                if (DAO != null && DAO.contains(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year)))
+                    yearResponse = DAO.get(YEAR_TABLE, new Pair<>(YEARS_TABLE_COLUMNS.getFirst(),year),
+                            YEARS_TABLE_COLUMNS.getSecond());
                 else {
                     List<URL> yearUrls = getNasaUrlsFromYear(year, NASA_HOST, NASA_API_KEY);
                     String largestAsteroid = null;

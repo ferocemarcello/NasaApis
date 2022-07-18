@@ -9,8 +9,10 @@ import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.core.spi.service.StatisticsService;
 import org.ehcache.impl.internal.statistics.DefaultStatisticsService;
 import org.example.DAO;
+import org.example.Main;
 import org.example.Pair;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.StreamSupport;
@@ -101,8 +103,12 @@ public class CacheUtils {
                     LocalDate.parse(dateTo))) {
                 newCacheDates.add(date);
             } else {
-                if (dao != null && dao.contains(datesTable, date)) {
-                    newDbDates.add(date);
+                try {
+                    if (dao != null && dao.contains(datesTable, new Pair<>(Main.DATES_TABLE_COLUMNS.getFirst(),date))) {
+                        newDbDates.add(date);
+                    }
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });
