@@ -54,7 +54,19 @@ Local jar:
 
 run it from the terminal with the following command:
 
-java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {nasa-api-key} {port-number} [cache-size-for-asteroids-in-date-range] [cache-size-for-largest-asteroid-description-in-year] [path-to-file-with-db-config]
+java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {nasa-api-key} {port-number} [cache-size-for-asteroids-in-date-range] [cache-size-for-largest-asteroid-description-in-year] [path-to-file-with-db-config].
+
+The parameter path-to-file-with-db-config is the path to a .yml file, that should look like like this:
+
+
+host : "your_host"
+port : "your_ort"
+user : "your_username"
+pwd : "your_password"
+db : "your_database_name"
+
+for a postgres Database
+
 
 Once the server(localhost) is up and running, go to the host and port displayed by the program(E.g http://localhost:8080/)
 
@@ -76,15 +88,17 @@ You can append:
     -/asteroids/largest?year={{year}} for description of the largest asteroids in one year(Example http://localhost:8080/asteroids/largest?year=2022)
     
 The date should be in the format "YYYY-MM-DD".
-You can't request a date range longer than 7 days unless some dates are already present in the cache
+You can't request a date range longer than 7 days unless some dates are already present in the cache or in the database
 
-Example:
+Example, in sequence:
 
         Request 1: fromDate=2021-01-01&toDate=2021-01-10 throws error
         
-        Request 2: fromDate=2021-01-01&toDate=2021-01-05 works
-        
-        Request 3: fromDate=2021-01-01&toDate=2021-01-10 works if the cache size is at least 3
+        Request 2: fromDate=2021-01-01&toDate=2021-01-05 works and puts data in the cache and database
+        Request 3: fromDate=2021-01-06&toDate=2021-01-11 works and puts data in the cache and database
+        Request 3: fromDate=2021-01-12&toDate=2021-01-18 works and puts data in the cache and database
+        Request 4: fromDate=2021-01-19&toDate=2021-01-26 works and puts data in the cache and database, the cache is now full and the LFU elements are evicted
+        Request 4: fromDate=2020-12-30&toDate=2021-01-07 works, takes the days in the december from NASA, the first 6 days of January from the Db, and the last day from the cache
     
 Example URLs : 
         http://localhost:8080/asteroids/largest?year=2021
@@ -96,7 +110,7 @@ Example URLs :
 Unit tests are availble in https://github.com/ferocemarcello/spondAssignment/tree/main/src/test/java. Integration tests would require to start the app and hit the app to see the results.
 
 
-Databases can be added with few lines of code. All the logic is there and one just need to connect with the database and write few lines of code for Select * FROM TABLE WHERE KEY=KEY, INSERT INTO TABLE
+Databases is added locally and its functioning has been tested.
 
 Example of Responses are available here:
 
