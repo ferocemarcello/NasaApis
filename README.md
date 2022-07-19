@@ -1,7 +1,3 @@
-# spondAssignment
-
-
-
 # Aim of the task
 
 The aim of this task is to assess the way you approach problems, including your coding style, expertise and willingness to experiment, as well as provide us with a common ground for a technical interview.
@@ -82,6 +78,7 @@ The port is 8080. The number of days in the cache for the dates request is 20 wh
 
 Be aware that for the largest asteroid of the year(ex: "https://asteroidspark.herokuapp.com/asteroids/largest?year=2021") you might have to wait about one minute or might encouter error and you'll have to try again. This is because NASA allows only requests for date ranges no longer than 8 days, so one has to do about 50 requests to NASA and it takes time. It would be much faster if already in the cache or in the database.
 
+At /index or / you can find basic information about the caches and the Database you are using
 
 You can append:
     
