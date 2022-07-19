@@ -132,4 +132,8 @@ public class DAO {
         }
         return map;
     }
+
+    public DbConfig getDbConfig() {
+        return dbConfig;
+    }
 }

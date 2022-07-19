@@ -20,6 +20,9 @@ public class DbConfig {
         this.db = db;
     }
 
+    public String toString() {
+        return "Host: "+host+". Port: "+port+". User: "+user+". Database: "+db;
+    }
     private String user;
 
     public DbConfig(String host, String port, String user, String pwd) {

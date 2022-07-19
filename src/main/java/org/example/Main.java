@@ -32,13 +32,14 @@ public class Main {
     public static Cache<String, String> CACHE_DATES;
     public static Cache<String, String> CACHE_YEARS;
     private static DAO DAO;
+    private static int defaultSparkPort = 8080;
 
     public static void main(String[] args) {
         if (args.length >= 1) NASA_API_KEY = args[0];
         else NASA_API_KEY = null;
         int port;
         if (args.length >= 2) port = getHerokuAssignedPort(Integer.parseInt(args[1]));
-        else port = getHerokuAssignedPort(8080);
+        else port = getHerokuAssignedPort(defaultSparkPort);
         if (args.length >= 3) CACHE_DATES_SIZE = Integer.parseInt(args[2]);
         else CACHE_DATES_SIZE = 30;
         if (args.length >= 4) CACHE_YEARS_SIZE = Integer.parseInt(args[3]);
@@ -164,12 +165,30 @@ public class Main {
         });
         get("/years/cacheSize", (req, res) -> {
             long size = getCacheSize(CACHE_YEARS_NAME);
-            return "Size of the cache is now 0"+ size;
+            return "Size of the cache is now "+ size;
+        });
+        get("/index", (req, res) -> {
+            long sizeDates = getCacheSize(CACHE_DATES_NAME);
+            long sizeYears = getCacheSize(CACHE_YEARS_NAME);
+            res.type("text/html");
+            res.status(200);
+            String returnString = "Current size of the cache for dates is now " + sizeDates + "<br>" +
+                    "Current size of the cache for dates is now " + sizeYears + "<br>" +
+                    "The Max size of the cache for dates is now " + CACHE_DATES_SIZE + "<br>" +
+                    "The Max size of the cache for years is now " + CACHE_YEARS_SIZE + "<br>";
+            if(DAO!=null) {
+                return returnString+"<br>DB config is:<br>"+DAO.getDbConfig().toString();
+            }
+            return returnString;
+        });
+        get("/", (req, res) -> {
+            res.redirect("/index");
+            return res;
         });
         notFound((req, res) -> {
             res.type("text/html");
             res.status(404);
-            return "Page not found";
+            return "Page not found, go to /index";
         });
         internalServerError((req, res) -> {
             res.status(500);
