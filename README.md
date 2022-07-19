@@ -106,15 +106,15 @@ Example URLs :
         https://asteroidspark.herokuapp.com/asteroids/largest?year=2021
         
      
-Unit tests are availble in https://github.com/ferocemarcello/spondAssignment/tree/main/src/test/java. Integration tests would require to start the app and hit the app to see the results.
+Unit tests are availble in https://github.com/ferocemarcello/NasaApis/tree/main/src/test/java. Integration tests would require to start the app and hit the app to see the results.
 
 
 A postgres db is available on heroku.
 
 Example of Responses are available here:
 
-- https://github.com/ferocemarcello/spondAssignment/blob/main/datesExampleResponse.json
-- https://github.com/ferocemarcello/spondAssignment/blob/main/yearLargestExampleResponse.json
+- https://github.com/ferocemarcello/NasaApis/blob/main/datesExampleResponse.json
+- https://github.com/ferocemarcello/NasaApis/blob/main/yearLargestExampleResponse.json
 
 
 Other 4 APIs are available:
