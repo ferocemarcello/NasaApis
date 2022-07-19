@@ -1,5 +1,5 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.example.utils.Utils;
+import org.nasaapis.utils.Utils;
 import org.junit.jupiter.api.Test;
 
 import java.net.MalformedURLException;
@@ -8,7 +8,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.example.utils.Utils.splitJsonStringToMap;
+import static org.nasaapis.utils.Utils.splitJsonStringToMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UtilsTests {
@@ -28,7 +28,7 @@ public class UtilsTests {
 
     @Test
     void testPrettyIndent() {
-        String jsonString = "{ \"glossary\": { \"title\": \"example glossary\", \"GlossDiv\": " +
+        String jsonString = "{ \"glossary\": { \"title\": \"nasaapis glossary\", \"GlossDiv\": " +
                 "{ \"title\": \"S\", \"GlossList\": { \"GlossEntry\": { \"ID\": \"SGML\", \"SortAs\": " +
                 "\"SGML\", \"GlossTerm\": \"Standard Generalized Markup Language\", \"Acronym\": \"SGML\", " +
                 "\"Abbrev\": \"ISO 8879:1986\", \"GlossDef\": { \"para\": \"A meta-markup language, " +
@@ -37,7 +37,7 @@ public class UtilsTests {
         String shouldBeIndented = """
                 {
                   "glossary" : {
-                    "title" : "example glossary",
+                    "title" : "nasaapis glossary",
                     "GlossDiv" : {
                       "title" : "S",
                       "GlossList" : {

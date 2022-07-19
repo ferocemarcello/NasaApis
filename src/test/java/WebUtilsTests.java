@@ -1,12 +1,12 @@
-import org.example.NasaException;
+import org.nasaapis.NasaException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import static org.example.utils.WebUtils.sendGetRequest;
-import static org.example.utils.WebUtils.sendGetRequestAndRead;
+import static org.nasaapis.utils.WebUtils.sendGetRequest;
+import static org.nasaapis.utils.WebUtils.sendGetRequestAndRead;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class WebUtilsTests {
