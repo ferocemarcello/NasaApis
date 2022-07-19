@@ -128,3 +128,8 @@ Other 4 APIs are available:
 /dates/cacheSize :   returns the current size of the cache for the dates
 
 /dates/cacheSize :   returns the current size of the cache for the years
+
+/dates/dbEntries : returns information about the current entries for the table dates
+/years/dbEntries : returns information about the current entries for the table dates
+/connectToDb : connects the application to the database
+/disconnectDb : disconnects the application from the database
