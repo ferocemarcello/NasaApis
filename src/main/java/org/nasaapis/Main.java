@@ -167,7 +167,7 @@ public class Main {
             long size = getCacheSize(CACHE_YEARS_NAME);
             return "Size of the cache is now "+ size;
         });
-        get("/dates/dbSize", (req, res) -> {
+        get("/dates/dbEntries", (req, res) -> {
             if(DAO==null) return "There is no Database configured";
             res.type("text/html");
             return DAO.getTableInfoAsHtml(DATES_TABLE, DATES_TABLE_COLUMNS);
