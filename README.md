@@ -11,7 +11,7 @@ Local jar:
 
 run it from the terminal with the following command:
 
-java -jar spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar {nasa-api-key} {port-number} [cache-size-for-asteroids-in-date-range] [cache-size-for-largest-asteroid-description-in-year] [path-to-file-with-db-config].
+java -jar nasaapis-1.0-jar-with-dependencies.jar {nasa-api-key} {port-number} [cache-size-for-asteroids-in-date-range] [cache-size-for-largest-asteroid-description-in-year] [path-to-file-with-db-config].
 
 The parameter path-to-file-with-db-config is the path to a .yml file, that should look like like this:
 

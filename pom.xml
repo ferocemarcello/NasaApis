@@ -112,7 +112,7 @@
                     <processTypes>
                         <!-- Tell Heroku how to launch your application -->
                         <!-- You might have to remove the ./ in front   -->
-                        <web>java -jar ./target/spondAssignment-1.0-SNAPSHOT-jar-with-dependencies.jar OeBj1tC4Ytk16scLAQcgKwvab7oMBXeGNCEFgOb7 8080 20 5</web>
+                        <web>java -jar ./target/nasaapis-1.0-jar-with-dependencies.jar OeBj1tC4Ytk16scLAQcgKwvab7oMBXeGNCEFgOb7 8080 20 5</web>
                     </processTypes>
                 </configuration>
             </plugin>
