@@ -18,7 +18,7 @@ The parameter path-to-file-with-db-config is the path to a .yml file, that shoul
 
 ```
 host : "your_host"
-port : "your_ort"
+port : "your_port"
 user : "your_username"
 pwd : "your_password"
 db : "your_database_name"
